@@ -1,4 +1,4 @@
-// cranksmith-app/src/app/api/stripe/webhook/route.ts
+// api/stripe/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
@@ -79,8 +79,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       subscription_status: 'premium',
       stripe_customer_id: session.customer as string,
       stripe_subscription_id: subscription.id,
-      subscription_start_date: new Date((subscription.current_period_start as number) * 1000).toISOString(),
-      subscription_end_date: new Date((subscription.current_period_end as number) * 1000).toISOString(),
+      subscription_start_date: new Date((subscription as any).current_period_start * 1000).toISOString(),
+      subscription_end_date: new Date((subscription as any).current_period_end * 1000).toISOString(),
       updated_at: new Date().toISOString()
     })
     .eq('id', userId)
@@ -123,8 +123,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     .from('profiles')
     .update({
       subscription_status: subscriptionStatus,
-      subscription_start_date: new Date((subscription.current_period_start as number) * 1000).toISOString(),
-      subscription_end_date: new Date((subscription.current_period_end as number) * 1000).toISOString(),
+      subscription_start_date: new Date((subscription as any).current_period_start * 1000).toISOString(),
+      subscription_end_date: new Date((subscription as any).current_period_end * 1000).toISOString(),
       updated_at: new Date().toISOString()
     })
     .eq('id', profile.id)
@@ -157,7 +157,7 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
     .from('profiles')
     .update({
       subscription_status: 'canceled',
-      subscription_end_date: new Date((subscription.current_period_end as number) * 1000).toISOString(),
+      subscription_end_date: new Date((subscription as any).current_period_end * 1000).toISOString(),
       updated_at: new Date().toISOString()
     })
     .eq('id', profile.id)
@@ -173,10 +173,14 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
   console.log('💸 Processing payment failure for invoice:', invoice.id)
   
-  // The subscription property might be a string ID or a Subscription object
-  const subscriptionId = typeof invoice.subscription === 'string' 
-    ? invoice.subscription 
-    : invoice.subscription?.id
+  // Handle subscription property properly
+  let subscriptionId: string | undefined
+  
+  if (typeof (invoice as any).subscription === 'string') {
+    subscriptionId = (invoice as any).subscription
+  } else if ((invoice as any).subscription && typeof (invoice as any).subscription === 'object') {
+    subscriptionId = (invoice as any).subscription.id
+  }
 
   if (!subscriptionId) {
     console.log('No subscription associated with this invoice')
