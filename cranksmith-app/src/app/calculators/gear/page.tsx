@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import Header from '@/components/Header'
 
 interface Component {
   id: string
@@ -316,18 +317,16 @@ export default function GearCalculator() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-indigo-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white">⚙️ Gear Calculator</h1>
-            <p className="text-gray-200 mt-2">Compare your current setup with potential upgrades</p>
-          </div>
-          <Link href="/garage" className="text-indigo-300 hover:text-indigo-200">
-            ← Back to Garage
-          </Link>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-indigo-900">
+      <Header 
+        user={user} 
+        profile={profile} 
+        title="⚙️ Gear Calculator"
+        subtitle="Compare your current setup with potential upgrades"
+        backTo={{ href: '/garage', label: 'Back to Garage' }}
+      />
+      
+      <div className="max-w-7xl mx-auto p-6">
 
         {/* Bike Selector */}
         <div className="bg-gray-800 rounded-lg shadow-lg p-6 mb-8">

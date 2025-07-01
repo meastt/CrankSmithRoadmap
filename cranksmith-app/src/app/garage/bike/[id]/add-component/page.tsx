@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Header from '@/components/Header'
 
 interface Component {
   id: string
@@ -37,6 +38,8 @@ export default function AddComponent({ params }: { params: Promise<{ id: string 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [adding, setAdding] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -47,6 +50,16 @@ export default function AddComponent({ params }: { params: Promise<{ id: string 
         router.push('/login')
         return
       }
+      setUser(user)
+
+      // Fetch user profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      
+      setProfile(profileData)
 
       // Fetch bike details
       const { data: bikeData, error: bikeError } = await supabase
@@ -189,26 +202,13 @@ export default function AddComponent({ params }: { params: Promise<{ id: string 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <Link href="/garage" className="text-2xl font-bold text-gray-900">
-              🔧 CrankSmith
-            </Link>
-            <span className="ml-4 text-sm text-gray-500">
-              Add Component to {bike?.nickname}
-            </span>
-          </div>
-          
-          <Link 
-            href={`/garage/bike/${bike?.id}`}
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            ← Back to {bike?.nickname}
-          </Link>
-        </div>
-      </header>
+      <Header 
+        user={user} 
+        profile={profile} 
+        title="Add Component"
+        subtitle={`Add parts to ${bike?.nickname}`}
+        backTo={{ href: `/garage/bike/${bike?.id}`, label: `Back to ${bike?.nickname}` }}
+      />
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Header from '@/components/Header'
 
 interface Profile {
   id: string
@@ -79,10 +80,6 @@ export default function Garage() {
     fetchGarageData()
   }, [router])
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
 
   const handleAddBikeClick = () => {
     // Check freemium limit
@@ -117,51 +114,10 @@ export default function Garage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <Link href="/garage" className="text-2xl font-bold text-gray-900">
-              🔧 CrankSmith
-            </Link>
-            <span className="ml-4 text-sm text-gray-500">Your Digital Garage</span>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">
-                Welcome, {user?.email}
-              </span>
-              {profile?.subscription_status === 'free' && (
-                <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
-                  Free Plan
-                </span>
-              )}
-              {profile?.subscription_status === 'premium' && (
-                <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
-                  Premium
-                </span>
-              )}
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header user={user} profile={profile} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Your Digital Garage</h1>
-          <p className="text-xl text-gray-600">
-            Manage your bikes, track components, and optimize every ride.
-          </p>
-        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
