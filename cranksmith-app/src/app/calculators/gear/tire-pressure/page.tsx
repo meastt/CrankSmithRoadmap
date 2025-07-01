@@ -6,30 +6,6 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Link from 'next/link'
 
-// Type that matches what Supabase actually returns
-type SupabaseBike = {
-  id: string
-  nickname: string
-  brand: string | null
-  model: string | null
-  bike_components: {
-    components: {
-      id: string
-      brand: string
-      model: string
-      tire_width_mm?: number | null
-      min_pressure_psi?: number | null
-      max_pressure_psi?: number | null
-      casing_type?: string | null
-      internal_rim_width_mm?: number | null
-      rim_type?: string | null
-      component_categories: {
-        name: string
-      }
-    } | null
-  }[]
-}
-
 // Clean interface for component use
 interface Bike {
   id: string
@@ -151,28 +127,34 @@ export default function TirePressureCalculator() {
       return
     }
 
-    // Transform Supabase data to match our Bike interface
-    const transformedBikes: Bike[] = (bikesData as SupabaseBike[] || [])
-      .filter(bike => bike.nickname) // Filter out any incomplete bikes
-      .map(bike => ({
+    // Handle the data safely with proper type checking
+    if (!bikesData) {
+      setBikes([])
+      return
+    }
+
+    // Transform and clean the data using any type to avoid Supabase type conflicts
+    const transformedBikes: Bike[] = bikesData
+      .filter((bike: any) => bike && bike.nickname) // Filter out any incomplete bikes
+      .map((bike: any) => ({
         id: bike.id,
         nickname: bike.nickname,
         brand: bike.brand || '',
         model: bike.model || '',
-        bike_components: bike.bike_components
-          .filter(bc => bc.components) // Filter out null components
-          .map(bc => ({
+        bike_components: (bike.bike_components || [])
+          .filter((bc: any) => bc && bc.components) // Filter out null components
+          .map((bc: any) => ({
             components: {
-              id: bc.components!.id,
-              brand: bc.components!.brand,
-              model: bc.components!.model,
-              tire_width_mm: bc.components!.tire_width_mm || undefined,
-              min_pressure_psi: bc.components!.min_pressure_psi || undefined,
-              max_pressure_psi: bc.components!.max_pressure_psi || undefined,
-              casing_type: bc.components!.casing_type || undefined,
-              internal_rim_width_mm: bc.components!.internal_rim_width_mm || undefined,
-              rim_type: bc.components!.rim_type || undefined,
-              component_categories: bc.components!.component_categories
+              id: bc.components.id,
+              brand: bc.components.brand || '',
+              model: bc.components.model || '',
+              tire_width_mm: bc.components.tire_width_mm || undefined,
+              min_pressure_psi: bc.components.min_pressure_psi || undefined,
+              max_pressure_psi: bc.components.max_pressure_psi || undefined,
+              casing_type: bc.components.casing_type || undefined,
+              internal_rim_width_mm: bc.components.internal_rim_width_mm || undefined,
+              rim_type: bc.components.rim_type || undefined,
+              component_categories: bc.components.component_categories || { name: '' }
             }
           }))
       }))
