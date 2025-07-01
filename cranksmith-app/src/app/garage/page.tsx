@@ -126,7 +126,7 @@ export default function Garage() {
             <div className="flex items-center">
               <div className="text-3xl mr-4">📏</div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">0 km</p>
+                <p className="text-2xl font-bold text-gray-900">0 miles</p>
                 <p className="text-gray-600">Total Miles</p>
               </div>
             </div>

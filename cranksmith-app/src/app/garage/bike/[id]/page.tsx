@@ -14,9 +14,25 @@ interface Bike {
   created_at: string
 }
 
+interface BikeComponent {
+  id: string
+  actual_weight_grams: number
+  mileage_miles: number
+  components: {
+    brand: string
+    model: string
+    description: string
+    weight_grams: number
+    component_categories: {
+      name: string
+    }
+  }
+}
+
 export default function BikeDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const [bike, setBike] = useState<Bike | null>(null)
+  const [bikeComponents, setBikeComponents] = useState<BikeComponent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [user, setUser] = useState(null)
@@ -46,12 +62,46 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
       } else {
         setBike(bikeData)
       }
+
+      // Fetch bike components
+      const { data: componentsData, error: componentsError } = await supabase
+        .from('bike_components')
+        .select(`
+          id,
+          actual_weight_grams,
+          mileage_miles,
+          components (
+            brand,
+            model,
+            description,
+            weight_grams,
+            component_categories (name)
+          )
+        `)
+        .eq('bike_id', resolvedParams.id)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (componentsError) {
+        console.error('Error fetching bike components:', componentsError)
+      } else {
+        setBikeComponents(componentsData || [])
+      }
       
       setLoading(false)
     }
 
     fetchBikeDetails()
   }, [resolvedParams.id, router])
+
+  // Calculate total weight
+  const totalWeight = bikeComponents.reduce((total, comp) => {
+    // Check if components data exists
+    if (!comp?.components) return total
+    
+    const weight = comp.actual_weight_grams || comp.components?.weight_grams || 0
+    return total + weight
+  }, 0)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -151,9 +201,12 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
               <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
                 Edit Bike
               </button>
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+              <a
+                href={`/garage/bike/${bike.id}/add-component`}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+              >
                 Add Component
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -162,19 +215,21 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6 text-center">
             <div className="text-3xl mb-2">🔧</div>
-            <p className="text-2xl font-bold text-gray-900">0</p>
+            <p className="text-2xl font-bold text-gray-900">{bikeComponents.length}</p>
             <p className="text-gray-600">Components</p>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 text-center">
             <div className="text-3xl mb-2">📏</div>
-            <p className="text-2xl font-bold text-gray-900">0 km</p>
+            <p className="text-2xl font-bold text-gray-900">0 miles</p>
             <p className="text-gray-600">Total Miles</p>
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 text-center">
             <div className="text-3xl mb-2">⚖️</div>
-            <p className="text-2xl font-bold text-gray-900">-- kg</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {totalWeight > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '-- kg'}
+            </p>
             <p className="text-gray-600">Weight</p>
           </div>
           
@@ -189,24 +244,62 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
         <div className="bg-white rounded-lg shadow-lg mb-8">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900">Components</h3>
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+            <a
+              href={`/garage/bike/${bike.id}/add-component`}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            >
               + Add Component
-            </button>
+            </a>
           </div>
           
           <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🔧</div>
-              <h4 className="text-lg font-medium text-gray-900 mb-2">
-                No components added yet
-              </h4>
-              <p className="text-gray-600 mb-6">
-                Start building your bike's spec sheet by adding components.
-              </p>
-              <button className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
-                Add First Component
-              </button>
-            </div>
+            {bikeComponents.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🔧</div>
+                <h4 className="text-lg font-medium text-gray-900 mb-2">
+                  No components added yet
+                </h4>
+                <p className="text-gray-600 mb-6">
+                  Start building your bike's spec sheet by adding components.
+                </p>
+                <a
+                  href={`/garage/bike/${bike.id}/add-component`}
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors"
+                >
+                  Add First Component
+                </a>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {bikeComponents.map((bikeComp) => (
+                  <div key={bikeComp.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">
+                          {bikeComp.components?.brand || 'Unknown'} {bikeComp.components?.model || 'Component'}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          {bikeComp.components?.component_categories?.name || 'Uncategorized'}
+                        </p>
+                        {bikeComp.components?.description && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {bikeComp.components.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right text-sm text-gray-600">
+                        {(bikeComp.actual_weight_grams || bikeComp.components?.weight_grams) && (
+                          <p className="font-medium">
+                            {bikeComp.actual_weight_grams || bikeComp.components?.weight_grams}g
+                          </p>
+                        )}
+                        <p>{bikeComp.mileage_miles || 0} miles</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
