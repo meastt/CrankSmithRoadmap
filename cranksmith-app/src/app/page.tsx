@@ -83,9 +83,20 @@ export default function Home() {
             <p className="text-gray-600 mb-6">
               Start tracking your bikes and components today.
             </p>
-            <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
-              Get Started (Coming Soon!)
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href="/signup"
+                className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-center"
+              >
+                Get Started Free
+              </a>
+              <a
+                href="/login"
+                className="bg-white text-indigo-600 border-2 border-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition-colors text-center"
+              >
+                Sign In
+              </a>
+            </div>
           </div>
         </div>
 
