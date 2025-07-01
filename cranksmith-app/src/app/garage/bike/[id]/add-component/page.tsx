@@ -72,6 +72,7 @@ export default function AddComponent({ params }: { params: Promise<{ id: string 
       if (categoriesError) {
         console.error('Error fetching categories:', categoriesError)
       } else {
+        console.log('Categories fetched:', categoriesData)
         setCategories(categoriesData || [])
       }
 
@@ -87,10 +88,12 @@ export default function AddComponent({ params }: { params: Promise<{ id: string 
       if (componentsError) {
         console.error('Error fetching components:', componentsError)
       } else {
+        console.log('Components fetched:', componentsData)
         const componentsWithCategory = componentsData?.map(comp => ({
           ...comp,
           category_name: comp.component_categories.name
         })) || []
+        console.log('Components with category:', componentsWithCategory)
         setComponents(componentsWithCategory)
         setFilteredComponents(componentsWithCategory)
       }
@@ -103,20 +106,26 @@ export default function AddComponent({ params }: { params: Promise<{ id: string 
 
   // Filter components based on category and search
   useEffect(() => {
+    console.log('Filtering - selectedCategory:', selectedCategory, 'searchTerm:', searchTerm)
     let filtered = components
 
     if (selectedCategory) {
+      console.log('Filtering by category:', selectedCategory)
       filtered = filtered.filter(comp => comp.category_id === selectedCategory)
+      console.log('Components after category filter:', filtered)
     }
 
     if (searchTerm) {
+      console.log('Filtering by search term:', searchTerm)
       filtered = filtered.filter(comp => 
         comp.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
         comp.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
         comp.description?.toLowerCase().includes(searchTerm.toLowerCase())
       )
+      console.log('Components after search filter:', filtered)
     }
 
+    console.log('Final filtered components:', filtered)
     setFilteredComponents(filtered)
   }, [selectedCategory, searchTerm, components])
 

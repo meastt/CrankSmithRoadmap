@@ -158,6 +158,67 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
     }
   }
 
+  const handleDeleteComponent = async (bikeComponentId: string) => {
+    if (!confirm('Are you sure you want to remove this component from your bike?')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('bike_components')
+        .delete()
+        .eq('id', bikeComponentId)
+        .eq('user_id', user?.id) // Make sure user owns this component
+
+      if (error) {
+        console.error('Error deleting component:', error)
+        alert('Failed to remove component. Please try again.')
+        return
+      }
+
+      // Refresh the component list
+      const { data: componentsData, error: componentsError } = await supabase
+        .from('bike_components')
+        .select(`
+          id,
+          actual_weight_grams,
+          mileage_miles,
+          components (
+            brand,
+            model,
+            description,
+            weight_grams,
+            component_categories (name)
+          )
+        `)
+        .eq('bike_id', bike?.id)
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+
+      if (componentsError) {
+        console.error('Error fetching updated components:', componentsError)
+      } else {
+        setBikeComponents(componentsData || [])
+        
+        // Update grouped components
+        const grouped = (componentsData || []).reduce((acc, component) => {
+          const categoryName = component.components?.component_categories?.name || 'Uncategorized'
+          if (!acc[categoryName]) {
+            acc[categoryName] = []
+          }
+          acc[categoryName].push(component)
+          return acc
+        }, {} as GroupedComponents)
+        
+        setGroupedComponents(grouped)
+      }
+
+    } catch (err) {
+      console.error('Error removing component:', err)
+      alert('Failed to remove component. Please try again.')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -251,25 +312,42 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
               <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
                 Edit Bike
               </button>
+              
+              {/* Gear Calculator Button */}
+              <Link
+                href="/calculators/gear"
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  profile?.subscription_status === 'premium'
+                    ? 'bg-purple-600 text-white hover:bg-purple-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+                onClick={(e) => {
+                  if (profile?.subscription_status !== 'premium') {
+                    e.preventDefault()
+                    setShowUpgradeModal(true)
+                  }
+                }}
+              >
+                ⚙️ Gear Calculator
+              </Link>
+              
               <button
                 onClick={handleLogRideClick}
                 className={`px-4 py-2 rounded-md transition-colors ${
                   profile?.subscription_status === 'premium'
-                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                📏 Log Ride
-                {profile?.subscription_status !== 'premium' && (
-                  <span className="ml-1 text-xs">🔒</span>
-                )}
+                📊 Log Ride
               </button>
-              <a
+              
+              <Link
                 href={`/garage/bike/${bike.id}/add-component`}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
               >
-                Add Component
-              </a>
+                + Add Component
+              </Link>
             </div>
           </div>
         </div>
@@ -353,27 +431,35 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
                               <h5 className="font-medium text-gray-900">
-                                {bikeComp.components?.brand || 'Unknown'} {bikeComp.components?.model || 'Component'}
+                                {bikeComp.components?.brand} {bikeComp.components?.model}
                               </h5>
                               {bikeComp.components?.description && (
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-sm text-gray-600 mt-1">
                                   {bikeComp.components.description}
                                 </p>
                               )}
-                            </div>
-                            <div className="text-right text-sm text-gray-600 ml-4">
-                              {(bikeComp.actual_weight_grams || bikeComp.components?.weight_grams) && (
-                                <p className="font-medium">
-                                  {bikeComp.actual_weight_grams || bikeComp.components?.weight_grams}g
-                                </p>
-                              )}
-                              <p className="flex items-center">
-                                {bikeComp.mileage_miles || 0} miles
-                                {profile?.subscription_status !== 'premium' && (
-                                  <span className="ml-1 text-xs text-gray-400">🔒</span>
+                              
+                              <div className="flex space-x-4 mt-2 text-sm text-gray-500">
+                                {bikeComp.components?.weight_grams && (
+                                  <span>Weight: {bikeComp.components.weight_grams}g</span>
                                 )}
-                              </p>
+                                {bikeComp.actual_weight_grams && (
+                                  <span>Actual: {bikeComp.actual_weight_grams}g</span>
+                                )}
+                                {bikeComp.mileage_miles > 0 && (
+                                  <span>Miles: {bikeComp.mileage_miles}</span>
+                                )}
+                              </div>
                             </div>
+                            
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => handleDeleteComponent(bikeComp.id)}
+                              className="ml-4 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                              title="Remove component from bike"
+                            >
+                              🗑️ Remove
+                            </button>
                           </div>
                         </div>
                       ))}

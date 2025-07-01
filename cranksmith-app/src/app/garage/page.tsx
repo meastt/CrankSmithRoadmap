@@ -199,6 +199,69 @@ export default function Garage() {
           </div>
         </div>
 
+        {/* Tools Section */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">🔧 Tools & Calculators</h3>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              
+              {/* Gear Calculator */}
+              <Link
+                href="/calculators/gear"
+                className={`p-4 rounded-lg border-2 transition-colors ${
+                  profile?.subscription_status === 'premium'
+                    ? 'border-purple-200 bg-purple-50 hover:border-purple-300'
+                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                }`}
+                onClick={(e) => {
+                  if (profile?.subscription_status !== 'premium') {
+                    e.preventDefault()
+                    setShowUpgradeModal(true)
+                  }
+                }}
+              >
+                <div className="text-center">
+                  <div className="text-3xl mb-2">⚙️</div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Gear Calculator</h4>
+                  <p className="text-sm text-gray-600">Compare gear ratios and speeds</p>
+                  {profile?.subscription_status !== 'premium' && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                      Premium
+                    </span>
+                  )}
+                </div>
+              </Link>
+
+              {/* Tire Pressure Calculator - Coming Soon */}
+              <div className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-50">
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🛞</div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Tire Pressure</h4>
+                  <p className="text-sm text-gray-600">Calculate optimal pressure</p>
+                  <span className="inline-block mt-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded">
+                    Coming Soon
+                  </span>
+                </div>
+              </div>
+
+              {/* Compatibility Checker - Coming Soon */}
+              <div className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-50">
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🔍</div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Compatibility</h4>
+                  <p className="text-sm text-gray-600">Check component compatibility</p>
+                  <span className="inline-block mt-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded">
+                    Coming Soon
+                  </span>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+
         {/* Bikes Section */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
