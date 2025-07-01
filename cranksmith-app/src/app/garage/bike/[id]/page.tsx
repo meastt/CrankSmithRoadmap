@@ -29,10 +29,15 @@ interface BikeComponent {
   }
 }
 
+interface GroupedComponents {
+  [categoryName: string]: BikeComponent[]
+}
+
 export default function BikeDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const [bike, setBike] = useState<Bike | null>(null)
   const [bikeComponents, setBikeComponents] = useState<BikeComponent[]>([])
+  const [groupedComponents, setGroupedComponents] = useState<GroupedComponents>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [user, setUser] = useState(null)
@@ -86,6 +91,18 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
         console.error('Error fetching bike components:', componentsError)
       } else {
         setBikeComponents(componentsData || [])
+        
+        // Group components by category
+        const grouped = (componentsData || []).reduce((acc, component) => {
+          const categoryName = component.components?.component_categories?.name || 'Uncategorized'
+          if (!acc[categoryName]) {
+            acc[categoryName] = []
+          }
+          acc[categoryName].push(component)
+          return acc
+        }, {} as GroupedComponents)
+        
+        setGroupedComponents(grouped)
       }
       
       setLoading(false)
@@ -253,7 +270,7 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
           </div>
           
           <div className="p-6">
-            {bikeComponents.length === 0 ? (
+            {Object.keys(groupedComponents).length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🔧</div>
                 <h4 className="text-lg font-medium text-gray-900 mb-2">
@@ -270,31 +287,39 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
                 </a>
               </div>
             ) : (
-              <div className="space-y-3">
-                {bikeComponents.map((bikeComp) => (
-                  <div key={bikeComp.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">
-                          {bikeComp.components?.brand || 'Unknown'} {bikeComp.components?.model || 'Component'}
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          {bikeComp.components?.component_categories?.name || 'Uncategorized'}
-                        </p>
-                        {bikeComp.components?.description && (
-                          <p className="text-sm text-gray-500 mt-1">
-                            {bikeComp.components.description}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right text-sm text-gray-600">
-                        {(bikeComp.actual_weight_grams || bikeComp.components?.weight_grams) && (
-                          <p className="font-medium">
-                            {bikeComp.actual_weight_grams || bikeComp.components?.weight_grams}g
-                          </p>
-                        )}
-                        <p>{bikeComp.mileage_miles || 0} miles</p>
-                      </div>
+              <div className="space-y-6">
+                {Object.entries(groupedComponents)
+                  .sort(([a], [b]) => a.localeCompare(b)) // Sort categories alphabetically
+                  .map(([categoryName, components]) => (
+                  <div key={categoryName} className="border-b border-gray-100 last:border-b-0 pb-6 last:pb-0">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-3 border-l-4 border-indigo-500 pl-3">
+                      {categoryName}
+                    </h4>
+                    <div className="space-y-3">
+                      {components.map((bikeComp) => (
+                        <div key={bikeComp.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h5 className="font-medium text-gray-900">
+                                {bikeComp.components?.brand || 'Unknown'} {bikeComp.components?.model || 'Component'}
+                              </h5>
+                              {bikeComp.components?.description && (
+                                <p className="text-sm text-gray-500 mt-1">
+                                  {bikeComp.components.description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right text-sm text-gray-600 ml-4">
+                              {(bikeComp.actual_weight_grams || bikeComp.components?.weight_grams) && (
+                                <p className="font-medium">
+                                  {bikeComp.actual_weight_grams || bikeComp.components?.weight_grams}g
+                                </p>
+                              )}
+                              <p>{bikeComp.mileage_miles || 0} miles</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
