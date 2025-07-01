@@ -1,4 +1,4 @@
-// src/app/api/stripe/webhook/route.ts
+// cranksmith-app/src/app/api/stripe/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
@@ -12,129 +12,202 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
-  const signature = request.headers.get('stripe-signature')!
+  const sig = request.headers.get('stripe-signature')!
 
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+    // Verify the webhook signature
+    event = stripe.webhooks.constructEvent(body, sig, endpointSecret)
   } catch (err) {
-    console.error('Webhook signature verification failed:', err)
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    console.error('⚠️  Webhook signature verification failed:', err)
+    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
   }
 
-  console.log('Received webhook event:', event.type)
+  console.log('✅ Webhook received:', event.type)
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session
-        const userId = session.metadata?.userId
-
-        if (!userId) {
-          console.error('No userId in session metadata')
-          break
-        }
-
-        // Update user's subscription status to premium
-        const { error } = await supabase
-          .from('profiles')
-          .upsert({
-            id: userId,
-            subscription_status: 'premium',
-            stripe_customer_id: session.customer as string,
-            updated_at: new Date().toISOString(),
-          })
-
-        if (error) {
-          console.error('Error updating user subscription:', error)
-        } else {
-          console.log(`Updated user ${userId} to premium`)
-        }
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
         break
-      }
-
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription
-        const customerId = subscription.customer as string
-
-        // Find user by Stripe customer ID
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('stripe_customer_id', customerId)
-          .single()
-
-        if (profileError || !profile) {
-          console.error('Could not find user for customer:', customerId)
-          break
-        }
-
-        // Update subscription status based on subscription status
-        const isActive = subscription.status === 'active'
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            subscription_status: isActive ? 'premium' : 'free',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', profile.id)
-
-        if (error) {
-          console.error('Error updating subscription status:', error)
-        } else {
-          console.log(`Updated user ${profile.id} subscription to ${isActive ? 'premium' : 'free'}`)
-        }
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
         break
-      }
-
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription
-        const customerId = subscription.customer as string
-
-        // Find user by Stripe customer ID
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('stripe_customer_id', customerId)
-          .single()
-
-        if (profileError || !profile) {
-          console.error('Could not find user for customer:', customerId)
-          break
-        }
-
-        // Update to free plan
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            subscription_status: 'free',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', profile.id)
-
-        if (error) {
-          console.error('Error updating subscription to free:', error)
-        } else {
-          console.log(`Updated user ${profile.id} to free plan`)
-        }
+      case 'customer.subscription.deleted':
+        await handleSubscriptionCanceled(event.data.object as Stripe.Subscription)
         break
-      }
-
+      case 'invoice.payment_failed':
+        await handlePaymentFailed(event.data.object as Stripe.Invoice)
+        break
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
   } catch (error) {
     console.error('Error processing webhook:', error)
-    return NextResponse.json(
-      { error: 'Webhook processing failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })
+}
+
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  console.log('💳 Processing checkout completion for session:', session.id)
+  
+  const userId = session.metadata?.userId
+  if (!userId) {
+    console.error('No userId in session metadata')
+    return
+  }
+
+  if (!session.subscription) {
+    console.error('No subscription found in session')
+    return
+  }
+
+  // Get the subscription details
+  const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+  
+  // Update user profile in Supabase
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      subscription_status: 'premium',
+      stripe_customer_id: session.customer as string,
+      stripe_subscription_id: subscription.id,
+      subscription_start_date: new Date((subscription.current_period_start as number) * 1000).toISOString(),
+      subscription_end_date: new Date((subscription.current_period_end as number) * 1000).toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Failed to update user subscription:', error)
+    throw error
+  }
+
+  console.log('✅ User upgraded to premium:', userId)
+}
+
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  console.log('🔄 Processing subscription update:', subscription.id)
+  
+  // Find user by stripe_subscription_id
+  const { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('stripe_subscription_id', subscription.id)
+    .single()
+
+  if (findError || !profile) {
+    console.error('User not found for subscription:', subscription.id)
+    return
+  }
+
+  // Determine subscription status
+  let subscriptionStatus = 'free'
+  if (subscription.status === 'active') {
+    subscriptionStatus = 'premium'
+  } else if (subscription.status === 'past_due') {
+    subscriptionStatus = 'past_due'
+  } else if (['canceled', 'unpaid'].includes(subscription.status)) {
+    subscriptionStatus = 'canceled'
+  }
+
+  // Update subscription details
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      subscription_status: subscriptionStatus,
+      subscription_start_date: new Date((subscription.current_period_start as number) * 1000).toISOString(),
+      subscription_end_date: new Date((subscription.current_period_end as number) * 1000).toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', profile.id)
+
+  if (error) {
+    console.error('Failed to update subscription:', error)
+    throw error
+  }
+
+  console.log('✅ Subscription updated for user:', profile.id, 'Status:', subscriptionStatus)
+}
+
+async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
+  console.log('❌ Processing subscription cancellation:', subscription.id)
+  
+  // Find user by stripe_subscription_id
+  const { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('stripe_subscription_id', subscription.id)
+    .single()
+
+  if (findError || !profile) {
+    console.error('User not found for subscription:', subscription.id)
+    return
+  }
+
+  // Update to canceled status
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      subscription_status: 'canceled',
+      subscription_end_date: new Date((subscription.current_period_end as number) * 1000).toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', profile.id)
+
+  if (error) {
+    console.error('Failed to update canceled subscription:', error)
+    throw error
+  }
+
+  console.log('✅ Subscription canceled for user:', profile.id)
+}
+
+async function handlePaymentFailed(invoice: Stripe.Invoice) {
+  console.log('💸 Processing payment failure for invoice:', invoice.id)
+  
+  // The subscription property might be a string ID or a Subscription object
+  const subscriptionId = typeof invoice.subscription === 'string' 
+    ? invoice.subscription 
+    : invoice.subscription?.id
+
+  if (!subscriptionId) {
+    console.log('No subscription associated with this invoice')
+    return
+  }
+
+  // Find user by stripe_subscription_id
+  const { data: profile, error: findError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('stripe_subscription_id', subscriptionId)
+    .single()
+
+  if (findError || !profile) {
+    console.error('User not found for subscription:', subscriptionId)
+    return
+  }
+
+  // Update to past_due status
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      subscription_status: 'past_due',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', profile.id)
+
+  if (error) {
+    console.error('Failed to update payment failed status:', error)
+    throw error
+  }
+
+  console.log('✅ Payment failure processed for user:', profile.id)
 }
