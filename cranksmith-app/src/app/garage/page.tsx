@@ -3,39 +3,72 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
-interface User {
+interface Profile {
   id: string
-  email: string
+  subscription_status: 'free' | 'premium'
 }
 
 export default function Garage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
   const [bikes, setBikes] = useState([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [user, setUser] = useState(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is logged in and fetch bikes
-    const checkUserAndFetchBikes = async () => {
+    const fetchGarageData = async () => {
+      // Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser()
-      
       if (!user) {
         router.push('/login')
         return
       }
-      
       setUser(user)
-      
-      // Fetch user's bikes
-      const { data: bikesData, error } = await supabase
+
+      // Fetch user profile with subscription status
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, subscription_status')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError)
+        // If profile doesn't exist, create one with default free status
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: user.id,
+              subscription_status: 'free'
+            }
+          ])
+          .select()
+          .single()
+
+        if (createError) {
+          console.error('Error creating profile:', createError)
+        } else {
+          setProfile(newProfile)
+        }
+      } else {
+        setProfile(profileData)
+      }
+
+      // Fetch bikes
+      const { data: bikesData, error: bikesError } = await supabase
         .from('bikes')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-      
-      if (error) {
-        console.error('Error fetching bikes:', error)
+
+      if (bikesError) {
+        setError('Error fetching bikes')
+        console.error('Error:', bikesError)
       } else {
         setBikes(bikesData || [])
       }
@@ -43,12 +76,21 @@ export default function Garage() {
       setLoading(false)
     }
 
-    checkUserAndFetchBikes()
+    fetchGarageData()
   }, [router])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  const handleAddBikeClick = () => {
+    // Check freemium limit
+    if (profile?.subscription_status === 'free' && bikes.length >= 1) {
+      setShowUpgradeModal(true)
+    } else {
+      router.push('/garage/add-bike')
+    }
   }
 
   if (loading) {
@@ -62,22 +104,45 @@ export default function Garage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">❌</div>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <Link href="/garage" className="text-2xl font-bold text-gray-900">
               🔧 CrankSmith
-            </h1>
+            </Link>
             <span className="ml-4 text-sm text-gray-500">Your Digital Garage</span>
           </div>
           
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">
-              Welcome, {user?.email}
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">
+                Welcome, {user?.email}
+              </span>
+              {profile?.subscription_status === 'free' && (
+                <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
+                  Free Plan
+                </span>
+              )}
+              {profile?.subscription_status === 'premium' && (
+                <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
+                  Premium
+                </span>
+              )}
+            </div>
             <button
               onClick={handleSignOut}
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
@@ -90,13 +155,11 @@ export default function Garage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to Your Garage
-          </h2>
-          <p className="text-gray-600">
-            Manage your bikes, track components, and optimize your rides.
+        {/* Page Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Your Digital Garage</h1>
+          <p className="text-xl text-gray-600">
+            Manage your bikes, track components, and optimize every ride.
           </p>
         </div>
 
@@ -108,6 +171,9 @@ export default function Garage() {
               <div>
                 <p className="text-2xl font-bold text-gray-900">{bikes.length}</p>
                 <p className="text-gray-600">Bikes</p>
+                {profile?.subscription_status === 'free' && (
+                  <p className="text-xs text-gray-500">Free: 1 bike limit</p>
+                )}
               </div>
             </div>
           </div>
@@ -137,12 +203,12 @@ export default function Garage() {
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900">Your Bikes</h3>
-            <a
-              href="/garage/add-bike"
+            <button
+              onClick={handleAddBikeClick}
               className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
             >
               + Add New Bike
-            </a>
+            </button>
           </div>
           
           <div className="p-6">
@@ -155,12 +221,12 @@ export default function Garage() {
                 <p className="text-gray-600 mb-6">
                   Add your first bike to start tracking components and maintenance.
                 </p>
-                <a
-                  href="/garage/add-bike"
+                <button
+                  onClick={handleAddBikeClick}
                   className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors"
                 >
                   Add Your First Bike
-                </a>
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -184,12 +250,12 @@ export default function Garage() {
                     </div>
                     
                     <div className="mt-4 pt-3 border-t border-gray-100">
-                      <a 
+                      <Link 
                         href={`/garage/bike/${bike.id}`}
                         className="text-sm text-indigo-600 hover:text-indigo-700"
                       >
                         View Details →
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -213,6 +279,52 @@ export default function Garage() {
           </div>
         </div>
       </main>
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md mx-4">
+            <div className="text-center">
+              <div className="text-4xl mb-4">🚀</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Upgrade to Premium
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Free users can manage 1 bike. Upgrade to Premium to add unlimited bikes and unlock advanced features!
+              </p>
+              
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Premium Features:</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>✅ Unlimited bikes</li>
+                  <li>✅ Advanced weight tracking</li>
+                  <li>✅ Manual mileage logging</li>
+                  <li>✅ Service alerts</li>
+                  <li>✅ Priority support</li>
+                </ul>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Maybe Later
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Implement Stripe checkout
+                    alert('Stripe checkout coming soon!')
+                  }}
+                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                >
+                  Upgrade Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

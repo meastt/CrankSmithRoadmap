@@ -29,6 +29,11 @@ interface BikeComponent {
   }
 }
 
+interface Profile {
+  id: string
+  subscription_status: 'free' | 'premium'
+}
+
 interface GroupedComponents {
   [categoryName: string]: BikeComponent[]
 }
@@ -38,9 +43,11 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
   const [bike, setBike] = useState<Bike | null>(null)
   const [bikeComponents, setBikeComponents] = useState<BikeComponent[]>([])
   const [groupedComponents, setGroupedComponents] = useState<GroupedComponents>({})
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [user, setUser] = useState(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -52,6 +59,19 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
         return
       }
       setUser(user)
+
+      // Fetch user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, subscription_status')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError)
+      } else {
+        setProfile(profileData)
+      }
 
       // Fetch bike details
       const { data: bikeData, error } = await supabase
@@ -120,9 +140,22 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
     return total + weight
   }, 0)
 
+  // Calculate total mileage (average of all components, or highest mileage)
+  const totalMileage = bikeComponents.length > 0 
+    ? Math.max(...bikeComponents.map(comp => comp.mileage_miles || 0))
+    : 0
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  const handleLogRideClick = () => {
+    if (profile?.subscription_status !== 'premium') {
+      setShowUpgradeModal(true)
+    } else {
+      router.push(`/garage/bike/${bike?.id}/add-ride`)
+    }
   }
 
   if (loading) {
@@ -218,6 +251,19 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
               <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
                 Edit Bike
               </button>
+              <button
+                onClick={handleLogRideClick}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  profile?.subscription_status === 'premium'
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                📏 Log Ride
+                {profile?.subscription_status !== 'premium' && (
+                  <span className="ml-1 text-xs">🔒</span>
+                )}
+              </button>
               <a
                 href={`/garage/bike/${bike.id}/add-component`}
                 className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
@@ -238,8 +284,11 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
           
           <div className="bg-white rounded-lg shadow p-6 text-center">
             <div className="text-3xl mb-2">📏</div>
-            <p className="text-2xl font-bold text-gray-900">0 miles</p>
+            <p className="text-2xl font-bold text-gray-900">{totalMileage.toFixed(1)} miles</p>
             <p className="text-gray-600">Total Miles</p>
+            {profile?.subscription_status !== 'premium' && (
+              <p className="text-xs text-gray-400 mt-1">🔒 Premium tracking</p>
+            )}
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 text-center">
@@ -248,6 +297,9 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
               {totalWeight > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '-- kg'}
             </p>
             <p className="text-gray-600">Weight</p>
+            {profile?.subscription_status !== 'premium' && (
+              <p className="text-xs text-gray-400 mt-1">🔒 Premium feature</p>
+            )}
           </div>
           
           <div className="bg-white rounded-lg shadow p-6 text-center">
@@ -315,7 +367,12 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
                                   {bikeComp.actual_weight_grams || bikeComp.components?.weight_grams}g
                                 </p>
                               )}
-                              <p>{bikeComp.mileage_miles || 0} miles</p>
+                              <p className="flex items-center">
+                                {bikeComp.mileage_miles || 0} miles
+                                {profile?.subscription_status !== 'premium' && (
+                                  <span className="ml-1 text-xs text-gray-400">🔒</span>
+                                )}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -343,6 +400,52 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
       </main>
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md mx-4">
+            <div className="text-center">
+              <div className="text-4xl mb-4">🚀</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Premium Feature
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Manual ride logging is available with Premium. Upgrade to track component mileage and maintenance schedules!
+              </p>
+              
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Premium Features:</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>✅ Manual ride logging</li>
+                  <li>✅ Component mileage tracking</li>
+                  <li>✅ Advanced weight tracking</li>
+                  <li>✅ Service alerts</li>
+                  <li>✅ Unlimited bikes</li>
+                </ul>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Maybe Later
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Implement Stripe checkout
+                    alert('Stripe checkout coming soon!')
+                  }}
+                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                >
+                  Upgrade Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
