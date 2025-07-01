@@ -29,6 +29,8 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
     if (title && subtitle) return { title, subtitle }
     
     if (pathname === '/garage') return { title: 'Your Digital Garage', subtitle: 'Manage your bikes and components' }
+    if (pathname === '/calculators') return { title: 'Calculators', subtitle: 'Pre-ride optimization tools' }
+    if (pathname.includes('/calculators/tire-pressure')) return { title: 'Tire Pressure Calculator', subtitle: 'Get optimal pressure recommendations' }
     if (pathname.includes('/calculators/gear')) return { title: 'Gear Calculator', subtitle: 'Compare gear ratios and speeds' }
     if (pathname.includes('/add-component')) return { title: 'Add Component', subtitle: 'Find and add parts to your bike' }
     if (pathname.includes('/bike/')) return { title: 'Bike Details', subtitle: 'View and manage components' }
@@ -74,6 +76,35 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
             </div>
           )}
         </div>
+
+        {/* Navigation Bar */}
+        {user && (
+          <div className="flex items-center space-x-8 pb-4">
+            <Link 
+              href="/garage"
+              className={`text-sm font-medium transition-colors ${
+                pathname === '/garage' || pathname.includes('/bike/')
+                  ? 'text-indigo-600 border-b-2 border-indigo-600 pb-2' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Garage
+            </Link>
+            <Link 
+              href="/calculators"
+              className={`text-sm font-medium transition-colors ${
+                pathname.includes('/calculators')
+                  ? 'text-indigo-600 border-b-2 border-indigo-600 pb-2' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Calculators
+            </Link>
+            {/* Future navigation items */}
+            <span className="text-sm text-gray-400">Tools (Coming Soon)</span>
+            <span className="text-sm text-gray-400">Community (Coming Soon)</span>
+          </div>
+        )}
 
         {/* Bottom row - Page title and breadcrumb */}
         <div className="flex items-center justify-between pb-4">
