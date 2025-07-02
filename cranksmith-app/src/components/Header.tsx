@@ -31,6 +31,7 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
     if (pathname === '/garage') return { title: 'Your Digital Garage', subtitle: 'Manage your bikes and components' }
     if (pathname === '/calculators') return { title: 'Calculators', subtitle: 'Pre-ride optimization tools' }
     if (pathname.includes('/calculators/tire-pressure')) return { title: 'Tire Pressure Calculator', subtitle: 'Get optimal pressure recommendations' }
+    if (pathname.includes('/calculators/suspension')) return { title: 'Suspension Setup Guide', subtitle: 'MTB suspension baseline settings' }
     if (pathname.includes('/calculators/gear')) return { title: 'Gear Calculator', subtitle: 'Compare gear ratios and speeds' }
     if (pathname.includes('/add-component')) return { title: 'Add Component', subtitle: 'Find and add parts to your bike' }
     if (pathname.includes('/bike/')) return { title: 'Bike Details', subtitle: 'View and manage components' }

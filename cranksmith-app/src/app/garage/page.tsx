@@ -190,29 +190,41 @@ export default function Garage() {
                 </div>
               </Link>
 
-              {/* Tire Pressure Calculator - Coming Soon */}
-              <div className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-50">
+              {/* Tire Pressure Calculator */}
+              <Link
+                href="/calculators/tire-pressure"
+                className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50 hover:border-blue-300 transition-colors"
+              >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🛞</div>
                   <h4 className="font-semibold text-gray-900 mb-1">Tire Pressure</h4>
                   <p className="text-sm text-gray-600">Calculate optimal pressure</p>
-                  <span className="inline-block mt-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded">
-                    Coming Soon
-                  </span>
                 </div>
-              </div>
+              </Link>
 
-              {/* Compatibility Checker - Coming Soon */}
-              <div className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 opacity-50">
+              {/* Compatibility Checker */}
+              <Link
+                href="/calculators/gear"
+                className="p-4 rounded-lg border-2 border-green-200 bg-green-50 hover:border-green-300 transition-colors"
+              >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🔍</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Compatibility</h4>
-                  <p className="text-sm text-gray-600">Check component compatibility</p>
-                  <span className="inline-block mt-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded">
-                    Coming Soon
-                  </span>
+                  <h4 className="font-semibold text-gray-900 mb-1">Gear Compatibility</h4>
+                  <p className="text-sm text-gray-600">Check gear compatibility</p>
                 </div>
-              </div>
+              </Link>
+
+              {/* Suspension Setup Calculator */}
+              <Link
+                href="/calculators/suspension"
+                className="p-4 rounded-lg border-2 border-orange-200 bg-orange-50 hover:border-orange-300 transition-colors"
+              >
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🔧</div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Suspension Setup</h4>
+                  <p className="text-sm text-gray-600">Calculate suspension settings</p>
+                </div>
+              </Link>
               
             </div>
           </div>
