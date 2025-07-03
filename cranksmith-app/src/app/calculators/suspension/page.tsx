@@ -14,6 +14,13 @@ interface SuspensionComponent {
   manufacturer_pressure_chart?: string
   baseline_rebound_clicks?: number
   baseline_compression_clicks?: number
+  component_categories: {
+    name: string
+  }
+}
+
+interface BikeComponent {
+  components: SuspensionComponent
 }
 
 interface Bike {
@@ -21,11 +28,7 @@ interface Bike {
   nickname: string
   brand: string
   model: string
-  bike_components: {
-    components: SuspensionComponent & {
-      component_categories: { name: string }
-    }
-  }[]
+  bike_components: BikeComponent[]
 }
 
 interface SuspensionSetup {
@@ -36,28 +39,19 @@ interface SuspensionSetup {
   notes: string[]
 }
 
-interface User {
-  id: string
-  email?: string
-}
-
-interface Profile {
-  id: string
-  subscription_status?: 'free' | 'premium'
-}
-
 export default function SuspensionCalculator() {
-  const [, setUser] = useState<User | null>(null)
-  const [, setProfile] = useState<Profile | null>(null)
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
   const [bikes, setBikes] = useState<Bike[]>([])
+  const [allBikes, setAllBikes] = useState<Bike[]>([]) // Store all user bikes
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null)
   const [loading, setLoading] = useState(true)
   const [calculating, setCalculating] = useState(false)
   const [riderWeight, setRiderWeight] = useState(75) // kg
   const [gearWeight, setGearWeight] = useState(3) // kg (helmet, pack, water, etc.)
-  const [useGarageMode, ] = useState(false)
-  const [manualFork, ] = useState('')
-  const [manualShock, ] = useState('')
+  const [useGarageMode, setUseGarageMode] = useState(false)
+  const [manualFork, setManualFork] = useState('')
+  const [manualShock, setManualShock] = useState('')
   const [forkSetup, setForkSetup] = useState<SuspensionSetup | null>(null)
   const [shockSetup, setShockSetup] = useState<SuspensionSetup | null>(null)
   const router = useRouter()
@@ -105,7 +99,9 @@ export default function SuspensionCalculator() {
             manufacturer_pressure_chart,
             baseline_rebound_clicks,
             baseline_compression_clicks,
-            component_categories (name)
+            component_categories (
+              name
+            )
           )
         )
       `)
@@ -116,30 +112,16 @@ export default function SuspensionCalculator() {
       return
     }
 
-    // Filter bikes that have suspension components and transform data
-    const mtbBikes = bikesData?.filter((bike: any) => 
-      bike.bike_components?.some((bc: any) => 
-        bc.components?.component_categories?.name === 'Fork' || 
-        bc.components?.component_categories?.name === 'Shock'
+    // Store all bikes
+    setAllBikes(bikesData || [])
+
+    // Filter bikes that have suspension components
+    const mtbBikes = bikesData?.filter(bike => 
+      bike.bike_components.some(bc => 
+        bc.components.component_categories.name === 'Fork' || 
+        bc.components.component_categories.name === 'Shock'
       )
-    ).map((bike: any) => ({
-      id: bike.id,
-      nickname: bike.nickname,
-      brand: bike.brand,
-      model: bike.model,
-      bike_components: bike.bike_components.map((bc: any) => ({
-        components: {
-          id: bc.components.id,
-          brand: bc.components.brand,
-          model: bc.components.model,
-          description: bc.components.description,
-          manufacturer_pressure_chart: bc.components.manufacturer_pressure_chart,
-          baseline_rebound_clicks: bc.components.baseline_rebound_clicks,
-          baseline_compression_clicks: bc.components.baseline_compression_clicks,
-          component_categories: { name: bc.components.component_categories.name }
-        }
-      }))
-    })) || []
+    ) || []
 
     setBikes(mtbBikes)
   }
@@ -177,7 +159,8 @@ export default function SuspensionCalculator() {
           brand: brand || 'Generic',
           model: model || 'Fork',
           description: manualFork,
-          baseline_rebound_clicks: 8
+          baseline_rebound_clicks: 8,
+          component_categories: { name: 'Fork' }
         }
       }
       
@@ -189,7 +172,8 @@ export default function SuspensionCalculator() {
           model: model || 'Shock',
           description: manualShock,
           baseline_rebound_clicks: 8,
-          baseline_compression_clicks: 6
+          baseline_compression_clicks: 6,
+          component_categories: { name: 'Shock' }
         }
       }
     }
@@ -203,7 +187,7 @@ export default function SuspensionCalculator() {
         airPressure: forkPressure,
         reboundClicks: reboundClicks,
         sag: 25, // Target 25% sag for most trail riding
-        notes: generateForkNotes(forkComponent)
+        notes: generateForkNotes(forkComponent, forkPressure)
       })
     }
 
@@ -218,7 +202,7 @@ export default function SuspensionCalculator() {
         reboundClicks: reboundClicks,
         compressionClicks: compressionClicks,
         sag: 30, // Target 30% sag for rear shock
-        notes: generateShockNotes(shockComponent)
+        notes: generateShockNotes(shockComponent, shockPressure)
       })
     }
 
@@ -252,7 +236,7 @@ export default function SuspensionCalculator() {
     return Math.max(100, Math.min(350, basePressure))
   }
 
-  const generateForkNotes = (fork: SuspensionComponent): string[] => {
+  const generateForkNotes = (fork: SuspensionComponent, pressure: number): string[] => {
     const notes = [
       'Start with this baseline and adjust to achieve 25% sag',
       'Check sag by measuring fork compression when seated on bike',
@@ -266,7 +250,7 @@ export default function SuspensionCalculator() {
     return notes
   }
 
-  const generateShockNotes = (shock: SuspensionComponent): string[] => {
+  const generateShockNotes = (shock: SuspensionComponent, pressure: number): string[] => {
     const notes = [
       'Target 30% sag for trail riding (25% for XC, 35% for enduro)',
       'Set rebound so wheel returns quickly but doesn\'t bounce',
@@ -308,242 +292,356 @@ export default function SuspensionCalculator() {
             Get baseline suspension settings for your MTB.
           </p>
           <div className="mt-2">
-            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
-              Premium Feature
+            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+              Free Version
             </span>
+            {profile?.subscription_status === 'premium' && (
+              <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                Premium Features
+              </span>
+            )}
           </div>
         </div>
 
-        {bikes.length === 0 && !useGarageMode ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <div className="text-4xl mb-4">🏔️</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Suspension Setup Calculator
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Enter your suspension components manually or add bikes to your garage for easier setup.
-            </p>
-            <Link 
-              href="/garage"
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Go to Garage
-            </Link>
-          </div>
-        ) : bikes.length === 0 && useGarageMode ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <div className="text-4xl mb-4">🏔️</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No MTB Bikes Found
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Add a mountain bike with fork and/or shock components to use this calculator.
-            </p>
-            <Link 
-              href="/garage"
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Go to Garage
-            </Link>
-          </div>
-        ) : (
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Input Section */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                  Setup Inputs
-                </h2>
-
-                {/* Bike Selection */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Bike
-                  </label>
-                  <select
-                    value={selectedBike?.id || ''}
-                    onChange={(e) => {
-                      const bike = bikes.find(b => b.id === e.target.value)
-                      if (bike) selectBike(bike)
-                    }}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    {bikes.map(bike => (
-                      <option key={bike.id} value={bike.id}>
-                        {bike.nickname} ({bike.brand} {bike.model})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Weight Inputs */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Rider Weight (kg)
-                    </label>
-                    <input
-                      type="number"
-                      value={riderWeight}
-                      onChange={(e) => setRiderWeight(parseInt(e.target.value) || 0)}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      min="40"
-                      max="150"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gear Weight (kg)
-                      <span className="text-gray-500 text-xs ml-1">(helmet, pack, water, etc.)</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={gearWeight}
-                      onChange={(e) => setGearWeight(parseInt(e.target.value) || 0)}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      min="0"
-                      max="20"
-                    />
-                  </div>
-                </div>
-
-                {/* Suspension Components Info */}
-                {selectedBike && hasSuspension && (
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium text-gray-900 mb-3">
-                      Suspension Components
-                    </h3>
-                    {selectedBike.bike_components
-                      .filter(bc => ['Fork', 'Shock'].includes(bc.components.component_categories.name))
-                      .map(bc => (
-                        <div key={bc.components.id} className="flex justify-between items-center py-2">
-                          <span className="text-sm text-gray-700">
-                            {bc.components.component_categories.name}: {bc.components.brand} {bc.components.model}
-                          </span>
-                        </div>
-                      ))
-                    }
-                  </div>
+        {/* Mode Selection */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Input Mode
+          </h2>
+          
+          <div className="space-y-3">
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="inputMode"
+                checked={!useGarageMode}
+                onChange={() => {
+                  setUseGarageMode(false)
+                  setSelectedBike(null)
+                  setForkSetup(null)
+                  setShockSetup(null)
+                }}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">
+                Quick Mode - Enter suspension manually
+              </span>
+            </label>
+            
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="inputMode"
+                checked={useGarageMode}
+                onChange={() => {
+                  setUseGarageMode(true)
+                  setForkSetup(null)
+                  setShockSetup(null)
+                }}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">
+                Garage Mode - Use saved bike
+                {allBikes.length === 0 && (
+                  <span className="ml-1 text-gray-500 text-xs">(No bikes in garage)</span>
                 )}
+                {profile?.subscription_status === 'premium' && (
+                  <span className="ml-1 text-purple-600 text-xs">PREMIUM</span>
+                )}
+              </span>
+            </label>
+          </div>
+        </div>
 
-                <button
-                  onClick={calculateSuspensionSetup}
-                  disabled={calculating || !selectedBike || !hasSuspension}
-                  className="w-full mt-6 bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {calculating ? 'Calculating...' : 'Calculate Setup'}
-                </button>
-              </div>
-            </div>
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Input Section */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                Setup Inputs
+              </h2>
 
-            {/* Results Section */}
-            <div className="space-y-6">
-              {/* Fork Setup */}
-              {forkSetup && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                    <span className="mr-2">🍴</span>
-                    Fork Setup
-                  </h2>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {forkSetup.airPressure} PSI
-                      </div>
-                      <div className="text-sm text-blue-700">Air Pressure</div>
+              {/* Garage Bike Selection */}
+              {useGarageMode && (
+                <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                  <h3 className="font-medium text-indigo-900 mb-3">
+                    Select Your Bike
+                  </h3>
+                  {allBikes.length === 0 ? (
+                    <div className="text-center py-4">
+                      <p className="text-gray-600 mb-3">No bikes found in your garage.</p>
+                      <Link 
+                        href="/garage"
+                        className="text-indigo-600 hover:text-indigo-700 font-medium"
+                      >
+                        Add bikes to your garage →
+                      </Link>
                     </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">
-                        {forkSetup.reboundClicks}
-                      </div>
-                      <div className="text-sm text-green-700">Rebound Clicks</div>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <select
+                        value={selectedBike?.id || ''}
+                        onChange={(e) => {
+                          const bike = allBikes.find(b => b.id === e.target.value)
+                          if (bike) selectBike(bike)
+                        }}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="">Select a bike...</option>
+                        {allBikes.map(bike => (
+                          <option key={bike.id} value={bike.id}>
+                            {bike.nickname} ({bike.brand} {bike.model})
+                          </option>
+                        ))}
+                      </select>
 
-                  <div className="text-center p-3 bg-orange-50 rounded-lg mb-4">
-                    <div className="text-lg font-semibold text-orange-600">
-                      Target: {forkSetup.sag}% Sag
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-gray-900">Setup Notes:</h4>
-                    {forkSetup.notes.map((note, index) => (
-                      <div key={index} className="text-sm text-gray-600 flex items-start space-x-2">
-                        <span className="text-blue-500 mt-0.5">•</span>
-                        <span>{note}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Shock Setup */}
-              {shockSetup && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                    <span className="mr-2">🔧</span>
-                    Shock Setup
-                  </h2>
-                  
-                  <div className="grid grid-cols-3 gap-3 mb-4">
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <div className="text-xl font-bold text-blue-600">
-                        {shockSetup.airPressure} PSI
-                      </div>
-                      <div className="text-xs text-blue-700">Air Pressure</div>
-                    </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <div className="text-xl font-bold text-green-600">
-                        {shockSetup.reboundClicks}
-                      </div>
-                      <div className="text-xs text-green-700">Rebound</div>
-                    </div>
-                    {shockSetup.compressionClicks && (
-                      <div className="text-center p-3 bg-purple-50 rounded-lg">
-                        <div className="text-xl font-bold text-purple-600">
-                          {shockSetup.compressionClicks}
+                      {/* Show selected bike's suspension components */}
+                      {selectedBike && (
+                        <div className="mt-4 p-3 bg-white rounded border">
+                          <h4 className="font-medium text-gray-900 mb-2">Suspension Components:</h4>
+                          {selectedBike.bike_components
+                            .filter(bc => ['Fork', 'Shock'].includes(bc.components.component_categories.name))
+                            .map(bc => (
+                              <div key={bc.components.id} className="text-sm text-gray-700">
+                                • {bc.components.component_categories.name}: {bc.components.brand} {bc.components.model}
+                              </div>
+                            ))
+                          }
+                          {selectedBike.bike_components.filter(bc => ['Fork', 'Shock'].includes(bc.components.component_categories.name)).length === 0 && (
+                            <div className="text-sm text-gray-500">
+                              No suspension components found on this bike. Try Quick Mode instead.
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs text-purple-700">Compression</div>
-                      </div>
-                    )}
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Manual Suspension Inputs */}
+              {!useGarageMode && (
+                <div className="mb-6 space-y-4">
+                  <h3 className="font-medium text-gray-900">Suspension Components</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Fork (optional)
+                    </label>
+                    <select
+                      value={manualFork}
+                      onChange={(e) => setManualFork(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select fork or leave blank...</option>
+                      <option value="RockShox - Lyrik Select+">RockShox Lyrik Select+</option>
+                      <option value="RockShox - Pike Select">RockShox Pike Select</option>
+                      <option value="Fox - 36 Performance">Fox 36 Performance</option>
+                      <option value="Fox - 34 Performance">Fox 34 Performance</option>
+                      <option value="Other - Generic Fork">Other/Generic Fork</option>
+                    </select>
                   </div>
 
-                  <div className="text-center p-3 bg-orange-50 rounded-lg mb-4">
-                    <div className="text-lg font-semibold text-orange-600">
-                      Target: {shockSetup.sag}% Sag
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-gray-900">Setup Notes:</h4>
-                    {shockSetup.notes.map((note, index) => (
-                      <div key={index} className="text-sm text-gray-600 flex items-start space-x-2">
-                        <span className="text-purple-500 mt-0.5">•</span>
-                        <span>{note}</span>
-                      </div>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Shock (optional)
+                    </label>
+                    <select
+                      value={manualShock}
+                      onChange={(e) => setManualShock(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select shock or leave blank...</option>
+                      <option value="RockShox - Deluxe Select+">RockShox Deluxe Select+</option>
+                      <option value="RockShox - Super Deluxe Select+">RockShox Super Deluxe Select+</option>
+                      <option value="Fox - Float DPS Performance">Fox Float DPS Performance</option>
+                      <option value="Other - Generic Shock">Other/Generic Shock</option>
+                    </select>
                   </div>
                 </div>
               )}
 
-              {/* Info Box */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">
-                  Suspension Setup Guide
-                </h3>
-                <div className="text-sm text-gray-600 space-y-2">
-                  <p><strong>Sag:</strong> The amount your suspension compresses under your weight</p>
-                  <p><strong>Rebound:</strong> How fast your suspension returns after compression</p>
-                  <p><strong>Compression:</strong> How your suspension reacts to impacts</p>
-                  <p><strong>Pro Tip:</strong> Always start with manufacturer recommendations and fine-tune from there</p>
+              {/* Weight Inputs */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Rider Weight (kg)
+                  </label>
+                  <input
+                    type="number"
+                    value={riderWeight}
+                    onChange={(e) => setRiderWeight(parseInt(e.target.value) || 0)}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    min="40"
+                    max="150"
+                  />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Gear Weight (kg)
+                    <span className="text-gray-500 text-xs ml-1">(helmet, pack, water, etc.)</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={gearWeight}
+                    onChange={(e) => setGearWeight(parseInt(e.target.value) || 0)}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    min="0"
+                    max="20"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={calculateSuspensionSetup}
+                disabled={calculating || (useGarageMode && (!selectedBike || !hasSuspension)) || (!useGarageMode && !manualFork && !manualShock)}
+                className="w-full mt-6 bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {calculating ? 'Calculating...' : 'Calculate Setup'}
+              </button>
+            </div>
+          </div>
+
+          {/* Results Section */}
+          <div className="space-y-6">
+            {/* Fork Setup */}
+            {forkSetup && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">🍴</span>
+                  Fork Setup
+                </h2>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {forkSetup.airPressure} PSI
+                    </div>
+                    <div className="text-sm text-blue-700">Air Pressure</div>
+                  </div>
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {forkSetup.reboundClicks}
+                    </div>
+                    <div className="text-sm text-green-700">Rebound Clicks</div>
+                  </div>
+                </div>
+
+                <div className="text-center p-3 bg-orange-50 rounded-lg mb-4">
+                  <div className="text-lg font-semibold text-orange-600">
+                    Target: {forkSetup.sag}% Sag
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-900">Setup Notes:</h4>
+                  {forkSetup.notes.map((note, index) => (
+                    <div key={index} className="text-sm text-gray-600 flex items-start space-x-2">
+                      <span className="text-blue-500 mt-0.5">•</span>
+                      <span>{note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Shock Setup */}
+            {shockSetup && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <span className="mr-2">🔧</span>
+                  Shock Setup
+                </h2>
+                
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-xl font-bold text-blue-600">
+                      {shockSetup.airPressure} PSI
+                    </div>
+                    <div className="text-xs text-blue-700">Air Pressure</div>
+                  </div>
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <div className="text-xl font-bold text-green-600">
+                      {shockSetup.reboundClicks}
+                    </div>
+                    <div className="text-xs text-green-700">Rebound</div>
+                  </div>
+                  {shockSetup.compressionClicks && (
+                    <div className="text-center p-3 bg-purple-50 rounded-lg">
+                      <div className="text-xl font-bold text-purple-600">
+                        {shockSetup.compressionClicks}
+                      </div>
+                      <div className="text-xs text-purple-700">Compression</div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-center p-3 bg-orange-50 rounded-lg mb-4">
+                  <div className="text-lg font-semibold text-orange-600">
+                    Target: {shockSetup.sag}% Sag
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-900">Setup Notes:</h4>
+                  {shockSetup.notes.map((note, index) => (
+                    <div key={index} className="text-sm text-gray-600 flex items-start space-x-2">
+                      <span className="text-purple-500 mt-0.5">•</span>
+                      <span>{note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Premium Upsell */}
+            {profile?.subscription_status !== 'premium' && (
+              <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
+                <h3 className="font-semibold text-purple-900 mb-3">
+                  Unlock Premium Features
+                </h3>
+                <ul className="text-sm text-purple-700 space-y-2 mb-4">
+                  <li className="flex items-center space-x-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Auto-fill suspension data from your garage bikes</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Advanced manufacturer pressure charts</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Component-specific baseline settings</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Enhanced tire pressure calculator features</span>
+                  </li>
+                </ul>
+                <Link
+                  href="/upgrade"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+                >
+                  Upgrade to Premium
+                </Link>
+              </div>
+            )}
+
+            {/* Info Box */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-900 mb-3">
+                Suspension Setup Guide
+              </h3>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p><strong>Sag:</strong> The amount your suspension compresses under your weight</p>
+                <p><strong>Rebound:</strong> How fast your suspension returns after compression</p>
+                <p><strong>Compression:</strong> How your suspension reacts to impacts</p>
+                <p><strong>Pro Tip:</strong> Always start with manufacturer recommendations and fine-tune from there</p>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
