@@ -40,7 +40,7 @@ export default function AddManualRide({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [user, setUser] = useState(null)
+  const [, setUser] = useState<any>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const router = useRouter()
 
@@ -100,7 +100,17 @@ export default function AddManualRide({ params }: { params: Promise<{ id: string
       if (componentsError) {
         console.error('Error fetching bike components:', componentsError)
       } else {
-        setBikeComponents(componentsData || [])
+        // Transform the data to match our interface
+        const transformedComponents = (componentsData || []).map((comp: any) => ({
+          id: comp.id,
+          mileage_miles: comp.mileage_miles,
+          components: {
+            brand: comp.components.brand,
+            model: comp.components.model,
+            component_categories: { name: comp.components.component_categories.name }
+          }
+        }))
+        setBikeComponents(transformedComponents)
       }
 
       setLoading(false)
@@ -152,7 +162,7 @@ export default function AddManualRide({ params }: { params: Promise<{ id: string
       // For now, we'll just redirect back to the bike page
       
       router.push(`/garage/bike/${bike?.id}`)
-    } catch (err) {
+    } catch {
       setError('Failed to log ride. Please try again.')
     } finally {
       setSubmitting(false)

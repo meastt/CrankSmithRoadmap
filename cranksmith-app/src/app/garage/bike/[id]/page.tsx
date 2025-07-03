@@ -47,7 +47,7 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const router = useRouter()
 
@@ -111,10 +111,24 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
       if (componentsError) {
         console.error('Error fetching bike components:', componentsError)
       } else {
-        setBikeComponents(componentsData || [])
+        // Transform the data to match our interface
+        const transformedComponents = (componentsData || []).map((comp: any) => ({
+          id: comp.id,
+          actual_weight_grams: comp.actual_weight_grams,
+          mileage_miles: comp.mileage_miles,
+          components: {
+            brand: comp.components.brand,
+            model: comp.components.model,
+            description: comp.components.description,
+            weight_grams: comp.components.weight_grams,
+            component_categories: { name: comp.components.component_categories.name }
+          }
+        }))
+        
+        setBikeComponents(transformedComponents)
         
         // Group components by category
-        const grouped = (componentsData || []).reduce((acc, component) => {
+        const grouped = transformedComponents.reduce((acc: GroupedComponents, component: BikeComponent) => {
           const categoryName = component.components?.component_categories?.name || 'Uncategorized'
           if (!acc[categoryName]) {
             acc[categoryName] = []
@@ -195,10 +209,24 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
       if (componentsError) {
         console.error('Error fetching updated components:', componentsError)
       } else {
-        setBikeComponents(componentsData || [])
+        // Transform the data to match our interface
+        const transformedComponents = (componentsData || []).map((comp: any) => ({
+          id: comp.id,
+          actual_weight_grams: comp.actual_weight_grams,
+          mileage_miles: comp.mileage_miles,
+          components: {
+            brand: comp.components.brand,
+            model: comp.components.model,
+            description: comp.components.description,
+            weight_grams: comp.components.weight_grams,
+            component_categories: { name: comp.components.component_categories.name }
+          }
+        }))
+        
+        setBikeComponents(transformedComponents)
         
         // Update grouped components
-        const grouped = (componentsData || []).reduce((acc, component) => {
+        const grouped = transformedComponents.reduce((acc: GroupedComponents, component: BikeComponent) => {
           const categoryName = component.components?.component_categories?.name || 'Uncategorized'
           if (!acc[categoryName]) {
             acc[categoryName] = []
@@ -248,7 +276,7 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Header 
         user={user} 
-        profile={profile} 
+        profile={profile || undefined} 
         title={bike.nickname}
         subtitle={`${bike.brand} ${bike.model}`.trim() || 'Bike Details'}
         backTo={{ href: '/garage', label: 'Back to Garage' }}
@@ -379,7 +407,7 @@ export default function BikeDetail({ params }: { params: Promise<{ id: string }>
                   No components added yet
                 </h4>
                 <p className="text-gray-600 mb-6">
-                  Start building your bike's spec sheet by adding components.
+                  Start building your bike&apos;s spec sheet by adding components.
                 </p>
                 <a
                   href={`/garage/bike/${bike.id}/add-component`}

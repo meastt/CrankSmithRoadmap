@@ -17,7 +17,7 @@ export default function AddBike() {
   const [bikeType, setBikeType] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [bikeCount, setBikeCount] = useState(0)
   const router = useRouter()
@@ -109,7 +109,7 @@ export default function AddBike() {
         // Success! Redirect back to garage
         router.push('/garage')
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)
@@ -158,7 +158,7 @@ export default function AddBike() {
               Upgrade to Premium
             </h1>
             <p className="text-gray-600 mb-6">
-              You've reached the free plan limit of 1 bike. Upgrade to Premium to add unlimited bikes and unlock advanced features!
+              You&apos;ve reached the free plan limit of 1 bike. Upgrade to Premium to add unlimited bikes and unlock advanced features!
             </p>
             
             <div className="bg-gray-50 rounded-lg p-6 mb-6">

@@ -12,11 +12,11 @@ interface Profile {
 }
 
 export default function Garage() {
-  const [bikes, setBikes] = useState([])
+  const [bikes, setBikes] = useState<any[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const router = useRouter()
 
@@ -114,7 +114,7 @@ export default function Garage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Header user={user} profile={profile} />
+      <Header user={user} profile={profile || undefined} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -261,7 +261,7 @@ export default function Garage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bikes.map((bike: any) => (
+                {bikes.map((bike) => (
                   <div key={bike.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="text-center mb-3">
                       <div className="text-3xl mb-2">🚴‍♂️</div>

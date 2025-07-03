@@ -38,8 +38,8 @@ export default function AddComponent({ params }: { params: Promise<{ id: string 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [adding, setAdding] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
+  const [profile, setProfile] = useState<{ id: string; subscription_status?: 'free' | 'premium' } | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -168,7 +168,7 @@ export default function AddComponent({ params }: { params: Promise<{ id: string 
         // Success! Redirect back to bike details
         router.push(`/garage/bike/${bike.id}`)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setAdding(false)

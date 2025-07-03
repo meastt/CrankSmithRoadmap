@@ -6,8 +6,14 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 interface HeaderProps {
-  user?: any
-  profile?: any
+  user?: {
+    id: string
+    email?: string
+  }
+  profile?: {
+    id: string
+    subscription_status?: 'free' | 'premium'
+  }
   title?: string
   subtitle?: string
   backTo?: {

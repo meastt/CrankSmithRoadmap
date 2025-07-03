@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Link from 'next/link'
 
-// Clean interface for component use
 interface Bike {
   id: string
   nickname: string
@@ -46,14 +45,25 @@ interface PressureResult {
   notes: string[]
 }
 
+interface User {
+  id: string
+  email?: string
+}
+
+interface Profile {
+  id: string
+  subscription_status?: 'free' | 'premium'
+}
+
 export default function TirePressureCalculator() {
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [bikes, setBikes] = useState<Bike[]>([])
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null)
   const [loading, setLoading] = useState(true)
   const [calculating, setCalculating] = useState(false)
   const [result, setResult] = useState<PressureResult | null>(null)
+  const [, ] = useState(false)
   const router = useRouter()
 
   // Form inputs
@@ -86,10 +96,8 @@ export default function TirePressureCalculator() {
       
       setProfile(profileData)
 
-      // Fetch bikes with tire and rim components (premium feature)
-      if (profileData?.subscription_status === 'premium') {
-        await fetchBikes(user.id)
-      }
+      // Fetch bikes with tire and rim components (for garage mode)
+      await fetchBikes(user.id)
 
       setLoading(false)
     }
@@ -127,37 +135,27 @@ export default function TirePressureCalculator() {
       return
     }
 
-    // Handle the data safely with proper type checking
-    if (!bikesData) {
-      setBikes([])
-      return
-    }
-
-    // Transform and clean the data using any type to avoid Supabase type conflicts
-    const transformedBikes: Bike[] = bikesData
-      .filter((bike: any) => bike && bike.nickname) // Filter out any incomplete bikes
-      .map((bike: any) => ({
-        id: bike.id,
-        nickname: bike.nickname,
-        brand: bike.brand || '',
-        model: bike.model || '',
-        bike_components: (bike.bike_components || [])
-          .filter((bc: any) => bc && bc.components) // Filter out null components
-          .map((bc: any) => ({
-            components: {
-              id: bc.components.id,
-              brand: bc.components.brand || '',
-              model: bc.components.model || '',
-              tire_width_mm: bc.components.tire_width_mm || undefined,
-              min_pressure_psi: bc.components.min_pressure_psi || undefined,
-              max_pressure_psi: bc.components.max_pressure_psi || undefined,
-              casing_type: bc.components.casing_type || undefined,
-              internal_rim_width_mm: bc.components.internal_rim_width_mm || undefined,
-              rim_type: bc.components.rim_type || undefined,
-              component_categories: bc.components.component_categories || { name: '' }
-            }
-          }))
-      }))
+    // Transform the data to match our interface
+    const transformedBikes = bikesData?.map((bike: any) => ({
+      id: bike.id,
+      nickname: bike.nickname,
+      brand: bike.brand,
+      model: bike.model,
+      bike_components: bike.bike_components?.map((bc: any) => ({
+        components: {
+          id: bc.components.id,
+          brand: bc.components.brand,
+          model: bc.components.model,
+          tire_width_mm: bc.components.tire_width_mm,
+          min_pressure_psi: bc.components.min_pressure_psi,
+          max_pressure_psi: bc.components.max_pressure_psi,
+          casing_type: bc.components.casing_type,
+          internal_rim_width_mm: bc.components.internal_rim_width_mm,
+          rim_type: bc.components.rim_type,
+          component_categories: { name: bc.components.component_categories.name }
+        }
+      })) || []
+    })) || []
 
     setBikes(transformedBikes)
   }
@@ -466,11 +464,11 @@ export default function TirePressureCalculator() {
                 <ul className="text-sm text-purple-700 space-y-2 mb-4">
                   <li className="flex items-center space-x-2">
                     <span className="text-purple-500">✓</span>
-                    <span>Auto-fill from your garage bikes</span>
+                    <span>Auto-fill tire and rim data from your garage bikes</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <span className="text-purple-500">✓</span>
-                    <span>Advanced rim width calculations</span>
+                    <span>Advanced rim width calculations for accuracy</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <span className="text-purple-500">✓</span>
@@ -478,7 +476,11 @@ export default function TirePressureCalculator() {
                   </li>
                   <li className="flex items-center space-x-2">
                     <span className="text-purple-500">✓</span>
-                    <span>Tire-specific pressure ranges</span>
+                    <span>Tire-specific pressure ranges from manufacturer data</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="text-purple-500">✓</span>
+                    <span>Suspension calculator auto-fill from garage</span>
                   </li>
                 </ul>
                 <Link

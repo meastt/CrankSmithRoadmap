@@ -6,9 +6,19 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Link from 'next/link'
 
+interface User {
+  id: string
+  email?: string
+}
+
+interface Profile {
+  id: string
+  subscription_status?: 'free' | 'premium'
+}
+
 export default function CalculatorsPage() {
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -42,7 +52,7 @@ export default function CalculatorsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header user={undefined} profile={profile || undefined} />
       
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">

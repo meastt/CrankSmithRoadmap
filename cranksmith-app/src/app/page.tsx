@@ -10,16 +10,16 @@ export default function Home() {
     // Test Supabase connection
     const testConnection = async () => {
       try {
-        const { data, error } = await supabase.from('test').select('*').limit(1)
+        const { error } = await supabase.from('test').select('*').limit(1)
         if (error && error.code === '42P01') {
-          // Table doesn't exist, but connection works
+          // Table doesn&apos;t exist, but connection works
           setConnectionStatus('✅ Connected to Supabase!')
         } else if (error) {
           setConnectionStatus('❌ Connection error')
         } else {
           setConnectionStatus('✅ Connected to Supabase!')
         }
-      } catch (err) {
+      } catch {
         setConnectionStatus('❌ Connection failed')
       }
     }

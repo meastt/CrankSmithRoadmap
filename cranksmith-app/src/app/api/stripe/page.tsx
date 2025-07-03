@@ -6,19 +6,9 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Link from 'next/link'
 
-interface User {
-  id: string
-  email?: string
-}
-
-interface Profile {
-  id: string
-  subscription_status?: 'free' | 'premium'
-}
-
 export default function CalculatorsPage() {
-  const [, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -52,7 +42,7 @@ export default function CalculatorsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header user={undefined} profile={profile || undefined} />
+      <Header />
       
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
@@ -97,28 +87,54 @@ export default function CalculatorsPage() {
           </Link>
 
           {/* Suspension Setup Calculator */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 opacity-75">
-            <div className="flex items-start space-x-4">
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <div className="text-2xl">🏔️</div>
+          {profile?.subscription_status === 'premium' ? (
+            <Link href="/calculators/suspension" className="group">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-4">
+                  <div className="bg-orange-100 p-3 rounded-lg">
+                    <div className="text-2xl">🏔️</div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
+                      Suspension Setup Guide
+                    </h3>
+                    <p className="text-gray-600 mt-1 mb-3">
+                      Get baseline suspension settings for your MTB fork and shock based on manufacturer recommendations.
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                        Premium Only
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Suspension Setup Guide
-                  <span className="ml-2 text-sm text-gray-500">(Coming Soon)</span>
-                </h3>
-                <p className="text-gray-600 mt-1 mb-3">
-                  Get baseline suspension settings for your MTB fork and shock based on manufacturer recommendations.
-                </p>
-                
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
-                    Premium Only
-                  </span>
+            </Link>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 opacity-75">
+              <div className="flex items-start space-x-4">
+                <div className="bg-orange-100 p-3 rounded-lg">
+                  <div className="text-2xl">🏔️</div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Suspension Setup Guide
+                    <span className="ml-2 text-sm text-gray-500">(Premium Only)</span>
+                  </h3>
+                  <p className="text-gray-600 mt-1 mb-3">
+                    Get baseline suspension settings for your MTB fork and shock based on manufacturer recommendations.
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                      Premium Only
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Future calculators placeholders */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 opacity-50">
