@@ -1,4 +1,4 @@
-// src/components/Header.tsx
+// src/components/Header.tsx - Navigation Fixes
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -35,10 +35,13 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
     if (title && subtitle) return { title, subtitle }
     
     if (pathname === '/garage') return { title: 'Your Digital Garage', subtitle: 'Manage your bikes and components' }
-    if (pathname === '/calculators') return { title: 'Calculators', subtitle: 'Pre-ride optimization tools' }
+    if (pathname === '/calculators') return { title: 'Tools & Calculators', subtitle: 'Pre-ride optimization tools' }
     if (pathname.includes('/calculators/tire-pressure')) return { title: 'Tire Pressure Calculator', subtitle: 'Get optimal pressure recommendations' }
     if (pathname.includes('/calculators/suspension')) return { title: 'Suspension Setup Guide', subtitle: 'MTB suspension baseline settings' }
-    if (pathname.includes('/calculators/gear')) return { title: 'Gear Calculator', subtitle: 'Compare gear ratios and speeds' }
+    if (pathname.includes('/calculators/gear-ratio')) return { title: 'Gear Ratio Calculator', subtitle: 'Compare current vs proposed setups' }
+    if (pathname.includes('/calculators/compatibility')) return { title: 'Parts Compatibility Checker', subtitle: 'Verify parts work together' }
+    if (pathname.includes('/calculators/chain-length')) return { title: 'Chain Length Calculator', subtitle: 'Calculate optimal chain length' }
+    if (pathname.includes('/calculators/spoke-tension')) return { title: 'Spoke Tension Calculator', subtitle: 'Calculate proper spoke tension' }
     if (pathname.includes('/add-component')) return { title: 'Add Component', subtitle: 'Find and add parts to your bike' }
     if (pathname.includes('/bike/')) return { title: 'Bike Details', subtitle: 'View and manage components' }
     
@@ -84,13 +87,13 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
           )}
         </div>
 
-        {/* Navigation Bar */}
+        {/* Navigation Bar - FIXED HIGHLIGHTING LOGIC */}
         {user && (
           <div className="flex items-center space-x-8 pb-4">
             <Link 
               href="/garage"
               className={`text-sm font-medium transition-colors ${
-                pathname === '/garage' || pathname.includes('/bike/')
+                pathname === '/garage'  // ONLY highlight on actual garage page
                   ? 'text-indigo-600 border-b-2 border-indigo-600 pb-2' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
@@ -105,10 +108,9 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Calculators
+              Tools & Calculators
             </Link>
             {/* Future navigation items */}
-            <span className="text-sm text-gray-400">Tools (Coming Soon)</span>
             <span className="text-sm text-gray-400">Community (Coming Soon)</span>
           </div>
         )}
