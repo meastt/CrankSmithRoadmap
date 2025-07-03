@@ -1,4 +1,4 @@
-// src/app/calculators/tire-pressure/page.tsx (CORRECTED)
+// src/app/calculators/tire-pressure/page.tsx (COMPLETE CORRECTED FILE)
 
 'use client'
 
@@ -24,7 +24,6 @@ interface Bike {
       casing_type?: 'standard' | 'supple' | 'ultra-supple';
       internal_rim_width_mm?: number;
       rim_type?: 'hooked' | 'hookless';
-      // It would be a good idea to add wheel_diameter to your component data in the future
       component_categories: { name: string }[];
     }[];
   }[];
@@ -75,7 +74,7 @@ function formReducer(state: FormState, action: FormAction): FormState {
       return { ...state, [action.field]: action.value };
 
     case 'LOAD_BIKE':
-      // FIX 2: Use nullish coalescing (??) for safer fallbacks (handles 0 correctly)
+      // Use nullish coalescing (??) for safer fallbacks (handles 0 correctly)
       const payloadWithDefaults = {
         tireWidthMm: action.payload.tireWidthMm ?? state.tireWidthMm,
         rimWidthMm: action.payload.rimWidthMm ?? state.rimWidthMm,
@@ -221,25 +220,61 @@ export default function TirePressureCalculatorPage() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3">
-            <InputForm
-              formState={formState}
-              dispatch={dispatch}
-              onSubmit={handleCalculate}
-              isPremium={profile?.subscription_status === 'premium'}
-              bikes={bikes}
-              selectedBikeId={selectedBikeId}
-              onSelectBike={handleSelectBike}
-              isCalculating={calculating}
-            />
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left Column - Calculator Form */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Enter Your Details</h2>
+              
+              {/* Premium Bike Selection */}
+              {profile?.subscription_status === 'premium' && bikes.length > 0 && (
+                <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <h3 className="text-lg font-medium text-purple-900 mb-3">
+                    🎯 Load From Your Garage (Premium)
+                  </h3>
+                  <select
+                    value={selectedBikeId}
+                    onChange={(e) => handleSelectBike(e.target.value)}
+                    className="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select a bike to auto-fill...</option>
+                    {bikes.map(bike => (
+                      <option key={bike.id} value={bike.id}>
+                        {bike.nickname} ({bike.brand} {bike.model})
+                      </option>
+                    ))}
+                  </select>
+                  {selectedBikeId && (
+                    <p className="text-sm text-purple-700 mt-2">
+                      ✅ Loaded tire and rim data from your garage!
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <CalculatorForm
+                formState={formState}
+                dispatch={dispatch}
+                onSubmit={handleCalculate}
+                calculating={calculating}
+                isPremium={profile?.subscription_status === 'premium'}
+              />
+            </div>
           </div>
-          
-          <div className="lg:col-span-2 space-y-6" id="results-section">
-            {result && <ResultsDisplay result={result} />}
-            {profile?.subscription_status !== 'premium' && !result && <PremiumUpsell />}
+
+          {/* Right Column - Results and Info */}
+          <div className="space-y-6">
+            {result && (
+              <div id="results-section">
+                <ResultsDisplay result={result} />
+              </div>
+            )}
+            
+            {profile?.subscription_status !== 'premium' && (
+              <PremiumUpsell />
+            )}
+            
             <TirePressureTips />
-            {profile?.subscription_status !== 'premium' && result && <PremiumUpsell />}
           </div>
         </div>
       </main>
@@ -247,139 +282,208 @@ export default function TirePressureCalculatorPage() {
   );
 }
 
-// --- Sub-Components ---
-
-interface InputFormProps {
+// --- Calculator Form Component ---
+const CalculatorForm: FC<{
   formState: FormState;
   dispatch: React.Dispatch<FormAction>;
   onSubmit: (e: FormEvent) => void;
+  calculating: boolean;
   isPremium: boolean;
-  bikes: Bike[];
-  selectedBikeId: string;
-  onSelectBike: (id: string) => void;
-  isCalculating: boolean;
-}
-
-const InputForm: FC<InputFormProps> = ({ formState, dispatch, onSubmit, isPremium, bikes, selectedBikeId, onSelectBike, isCalculating }) => {
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const processedValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
-    dispatch({ type: 'SET_FIELD', field: name as keyof FormState, value: processedValue });
-  };
+}> = ({ formState, dispatch, onSubmit, calculating, isPremium }) => {
   
-  const tireWidthOptions = [
-    { value: 23, label: '23mm' }, { value: 25, label: '25mm' }, { value: 26, label: '26mm' },
-    { value: 28, label: '28mm' }, { value: 30, label: '30mm' }, { value: 32, label: '32mm' },
-    { value: 34, label: '34mm' }, { value: 35, label: '35mm' }, { value: 36, label: '36mm' },
-    { value: 38, label: '38mm' }, { value: 40, label: '40mm' }, { value: 42, label: '42mm' },
-    { value: 44, label: '44mm' }, { value: 45, label: '45mm' }, { value: 47, label: '47mm' },
-    { value: 50, label: '50mm' },
-    { value: 53.3, label: '2.1"' }, { value: 55.9, label: '2.2"' }, { value: 57.2, label: '2.25"' },
-    { value: 59.7, label: '2.35"' }, { value: 61, label: '2.4"' }, { value: 63.5, label: '2.5"' },
-    { value: 66, label: '2.6"' },
-  ];
+  const handleInputChange = (field: keyof FormState, value: any) => {
+    dispatch({ type: 'SET_FIELD', field, value });
+  };
 
   return (
-    <form onSubmit={onSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Your Setup Details</h2>
-      
-      {isPremium && bikes.length > 0 && (
-        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-          <h3 className="font-medium text-purple-900 mb-3">Premium: Auto-fill from Your Garage</h3>
-          <select value={selectedBikeId} onChange={(e) => onSelectBike(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            <option value="">Select a bike to auto-fill...</option>
-            {bikes.map(bike => <option key={bike.id} value={bike.id}>{bike.nickname} ({bike.brand} {bike.model})</option>)}
-          </select>
-        </div>
-      )}
-      
-      <div className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label htmlFor="riderWeightLbs" className="block text-sm font-medium text-gray-700 mb-1">Rider Weight (lbs)</label>
-            {/* FIX 1: Add fallback to '' to prevent uncontrolled input error */}
-            <input id="riderWeightLbs" type="number" name="riderWeightLbs" value={formState.riderWeightLbs || ''} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md shadow-sm" min="80" max="350" step="1" required />
-          </div>
-          <div>
-            <label htmlFor="bikeWeightLbs" className="block text-sm font-medium text-gray-700 mb-1">Total Bike Weight (lbs)</label>
-            {/* FIX 1: Add fallback to '' to prevent uncontrolled input error */}
-            <input id="bikeWeightLbs" type="number" name="bikeWeightLbs" value={formState.bikeWeightLbs || ''} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md shadow-sm" min="10" max="50" step="0.5" required />
-          </div>
-        </div>
-
+    <form onSubmit={onSubmit} className="space-y-6">
+      {/* Weight Inputs */}
+      <div className="grid md:grid-cols-2 gap-4">
         <div>
-            <label htmlFor="wheelDiameter" className="block text-sm font-medium text-gray-700 mb-1">Wheel Diameter</label>
-            <select id="wheelDiameter" name="wheelDiameter" value={formState.wheelDiameter} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md shadow-sm">
-                <option value="700c">700c (Road, Gravel, CX)</option>
-                <option value="650b">650b / 27.5" (Gravel, MTB)</option>
-                <option value="29er">29" (MTB)</option>
-            </select>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Your Weight (lbs) *
+          </label>
+          <input
+            type="number"
+            value={formState.riderWeightLbs}
+            onChange={(e) => handleInputChange('riderWeightLbs', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="165"
+            min="50"
+            max="400"
+            required
+          />
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-                <label htmlFor="tireWidthMm" className="block text-sm font-medium text-gray-700 mb-1">Labeled Tire Width</label>
-                <select id="tireWidthMm" name="tireWidthMm" value={formState.tireWidthMm} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md shadow-sm">
-                    {tireWidthOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-            </div>
-             <div>
-                <label htmlFor="rimWidthMm" className="block text-sm font-medium text-gray-700 mb-1">Internal Rim Width (mm)</label>
-                {/* FIX 1: Add fallback to '' to prevent uncontrolled input error */}
-                <input id="rimWidthMm" type="number" name="rimWidthMm" value={formState.rimWidthMm || ''} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md shadow-sm" min="15" max="40" step="1" required />
-            </div>
-        </div>
-
         <div>
-            <label htmlFor="tireType" className="block text-sm font-medium text-gray-700 mb-1">Tire Type</label>
-            <select id="tireType" name="tireType" value={formState.tireType} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md shadow-sm">
-                <option value="tubeless">Tubeless / Tubeless Ready</option>
-                <option value="tubetype">Tube-Type (Clincher with Inner Tube)</option>
-            </select>
-        </div>
-
-        <div>
-            <label htmlFor="tireCasing" className="block text-sm font-medium text-gray-700 mb-1">
-                Tire Casing Quality
-                {!isPremium && <span className="ml-1 text-gray-400 text-xs">(Premium for more options)</span>}
-            </label>
-            <select id="tireCasing" name="tireCasing" value={formState.tireCasing} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md shadow-sm" disabled={!isPremium && formState.tireCasing !== 'standard'}>
-                <option value="standard">Standard (e.g., 30-60 TPI)</option>
-                {isPremium && <>
-                    <option value="supple">Supple (e.g., 60-120 TPI)</option>
-                    <option value="ultra-supple">Ultra Supple / "Open Tubular" (e.g., 200+ TPI)</option>
-                </>}
-            </select>
-        </div>
-
-        <div>
-            <label htmlFor="surfaceType" className="block text-sm font-medium text-gray-700 mb-1">Primary Riding Surface</label>
-            <select id="surfaceType" name="surfaceType" value={formState.surfaceType} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-md shadow-sm">
-                <option value="pavement">Smooth Pavement / Tarmac</option>
-                <option value="poor_pavement">Poor Pavement / Chip Seal</option>
-                <option value="mixed">Mixed (Pavement & Light Gravel)</option>
-                <option value="gravel_hardpack">Hardpack Gravel / Firm Dirt</option>
-                <option value="gravel_loose">Loose or Chunky Gravel</option>
-            </select>
-        </div>
-
-        <div className="pt-2">
-            <label className="flex items-center space-x-3 cursor-pointer">
-                <input type="checkbox" name="isHookless" checked={formState.isHookless} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                <span className="text-sm font-medium text-gray-700">My rims are hookless</span>
-            </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Bike Weight (lbs) *
+          </label>
+          <input
+            type="number"
+            value={formState.bikeWeightLbs}
+            onChange={(e) => handleInputChange('bikeWeightLbs', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="19"
+            min="10"
+            max="50"
+            required
+          />
+          <p className="text-xs text-gray-500 mt-1">Include water bottles, bags, etc.</p>
         </div>
       </div>
 
-      <button type="submit" disabled={isCalculating} className="w-full mt-8 bg-indigo-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150">
-        {isCalculating ? 'Calculating...' : 'Calculate My Pressure'}
+      {/* Tire & Rim Specs */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tire Width (mm) *
+          </label>
+          <input
+            type="number"
+            value={formState.tireWidthMm}
+            onChange={(e) => handleInputChange('tireWidthMm', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="28"
+            min="18"
+            max="65"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Internal Rim Width (mm) *
+            {!isPremium && <span className="text-purple-600 text-xs ml-1">(Premium: Auto-filled)</span>}
+          </label>
+          <input
+            type="number"
+            value={formState.rimWidthMm}
+            onChange={(e) => handleInputChange('rimWidthMm', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="21"
+            min="12"
+            max="40"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Wheel Size and Hookless */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Wheel Size *
+          </label>
+          <select
+            value={formState.wheelDiameter}
+            onChange={(e) => handleInputChange('wheelDiameter', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            required
+          >
+            <option value="700c">700c (Road/Gravel)</option>
+            <option value="650b">650b (27.5")</option>
+            <option value="29er">29er (29")</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Rim Type
+          </label>
+          <div className="flex items-center space-x-4 pt-2">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="rimType"
+                checked={!formState.isHookless}
+                onChange={() => handleInputChange('isHookless', false)}
+                className="mr-2"
+              />
+              <span className="text-sm">Hooked</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="rimType"
+                checked={formState.isHookless}
+                onChange={() => handleInputChange('isHookless', true)}
+                className="mr-2"
+              />
+              <span className="text-sm">Hookless</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Tire Casing (Premium Feature) */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Tire Casing Type
+          {!isPremium && <span className="text-purple-600 text-xs ml-1">(Premium: Auto-filled from garage)</span>}
+        </label>
+        <select
+          value={formState.tireCasing}
+          onChange={(e) => handleInputChange('tireCasing', e.target.value)}
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+            !isPremium ? 'border-gray-200 bg-gray-50' : 'border-gray-300'
+          }`}
+          disabled={!isPremium}
+        >
+          <option value="standard">Standard (Most Common)</option>
+          <option value="supple">Supple (High-end road tires)</option>
+          <option value="ultra-supple">Ultra-Supple (Premium handmade)</option>
+        </select>
+        {!isPremium && (
+          <p className="text-xs text-gray-500 mt-1">
+            Upgrade to Premium to access advanced casing calculations
+          </p>
+        )}
+      </div>
+
+      {/* Surface & Tire Type */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Surface Type
+          </label>
+          <select
+            value={formState.surfaceType}
+            onChange={(e) => handleInputChange('surfaceType', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="pavement">Smooth Pavement</option>
+            <option value="poor_pavement">Poor Pavement</option>
+            <option value="mixed">Mixed (Road + Light Gravel)</option>
+            <option value="gravel_hardpack">Gravel (Hard pack)</option>
+            <option value="gravel_loose">Gravel (Loose)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tire Type
+          </label>
+          <select
+            value={formState.tireType}
+            onChange={(e) => handleInputChange('tireType', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="tubeless">Tubeless</option>
+            <option value="tubetype">Tube Type</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={calculating}
+        className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors font-semibold"
+      >
+        {calculating ? 'Calculating...' : 'Calculate My Pressure'}
       </button>
     </form>
   )
 }
 
-// Unchanged sub-components below this line
-// ... (ResultsDisplay, PremiumUpsell, TirePressureTips)
+// --- Results Display Component ---
 const ResultsDisplay: FC<{ result: PressureResult }> = ({ result }) => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-fade-in">
@@ -422,6 +526,7 @@ const ResultsDisplay: FC<{ result: PressureResult }> = ({ result }) => {
     );
 };
 
+// --- Premium Upsell Component ---
 const PremiumUpsell: FC = () => (
     <div className="bg-purple-50 rounded-lg p-6 border-2 border-dashed border-purple-200 text-center">
         <h3 className="text-lg font-semibold text-purple-900 mb-2">Unlock a More Precise Calculation</h3>
@@ -432,6 +537,7 @@ const PremiumUpsell: FC = () => (
     </div>
 );
 
+// --- Tips Component ---
 const TirePressureTips: FC = () => (
     <div className="bg-gray-100 rounded-lg p-6 border border-gray-200">
       <h3 className="text-lg font-semibold text-gray-900 mb-3">Pro Tips & Next Steps</h3>
