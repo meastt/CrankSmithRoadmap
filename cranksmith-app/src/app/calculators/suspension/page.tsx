@@ -47,8 +47,8 @@ export default function SuspensionCalculator() {
   const [selectedBike, setSelectedBike] = useState<Bike | null>(null)
   const [loading, setLoading] = useState(true)
   const [calculating, setCalculating] = useState(false)
-  const [riderWeight, setRiderWeight] = useState(75) // kg
-  const [gearWeight, setGearWeight] = useState(3) // kg (helmet, pack, water, etc.)
+  const [riderWeight, setRiderWeight] = useState(165) // lbs
+  const [gearWeight, setGearWeight] = useState(7) // lbs (helmet, pack, water, etc.)
   const [useGarageMode, setUseGarageMode] = useState(false)
   const [manualFork, setManualFork] = useState('')
   const [manualShock, setManualShock] = useState('')
@@ -137,7 +137,10 @@ export default function SuspensionCalculator() {
   const calculateSuspensionSetup = () => {
     setCalculating(true)
     
-    const totalWeight = riderWeight + gearWeight
+    // Convert pounds to kg for calculations
+    const riderWeightKg = riderWeight * 0.453592
+    const gearWeightKg = gearWeight * 0.453592
+    const totalWeightKg = riderWeightKg + gearWeightKg
     
     let forkComponent: SuspensionComponent | undefined
     let shockComponent: SuspensionComponent | undefined
@@ -185,7 +188,7 @@ export default function SuspensionCalculator() {
 
     // Calculate fork setup
     if (forkComponent) {
-      const forkPressure = calculateForkPressure(totalWeight, forkComponent)
+      const forkPressure = calculateForkPressure(totalWeightKg, forkComponent)
       const reboundClicks = forkComponent.baseline_rebound_clicks || 8
       
       setForkSetup({
@@ -198,7 +201,7 @@ export default function SuspensionCalculator() {
 
     // Calculate shock setup
     if (shockComponent) {
-      const shockPressure = calculateShockPressure(totalWeight, shockComponent)
+      const shockPressure = calculateShockPressure(totalWeightKg, shockComponent)
       const reboundClicks = shockComponent.baseline_rebound_clicks || 8
       const compressionClicks = shockComponent.baseline_compression_clicks || 6
       
@@ -475,21 +478,21 @@ export default function SuspensionCalculator() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rider Weight (kg)
+                    Rider Weight (lbs)
                   </label>
                   <input
                     type="number"
                     value={riderWeight}
                     onChange={(e) => setRiderWeight(parseInt(e.target.value) || 0)}
                     className="w-full p-2 border border-gray-300 rounded-md"
-                    min="40"
-                    max="150"
+                    min="90"
+                    max="330"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Gear Weight (kg)
+                    Gear Weight (lbs)
                     <span className="text-gray-500 text-xs ml-1">(helmet, pack, water, etc.)</span>
                   </label>
                   <input
@@ -498,7 +501,7 @@ export default function SuspensionCalculator() {
                     onChange={(e) => setGearWeight(parseInt(e.target.value) || 0)}
                     className="w-full p-2 border border-gray-300 rounded-md"
                     min="0"
-                    max="20"
+                    max="45"
                   />
                 </div>
               </div>
