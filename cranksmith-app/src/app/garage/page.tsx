@@ -155,7 +155,7 @@ export default function Garage() {
           </div>
         </div>
 
-        {/* Tools Section */}
+        {/* Tools Section - FIXED ROUTING */}
         <div className="bg-white rounded-lg shadow mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">🔧 Tools & Calculators</h3>
@@ -163,9 +163,9 @@ export default function Garage() {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               
-              {/* Gear Calculator */}
+              {/* Gear Ratio Calculator - Premium */}
               <Link
-                href="/calculators/gear"
+                href="/calculators/gear-ratio"
                 className={`p-4 rounded-lg border-2 transition-colors ${
                   profile?.subscription_status === 'premium'
                     ? 'border-purple-200 bg-purple-50 hover:border-purple-300'
@@ -180,8 +180,8 @@ export default function Garage() {
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">⚙️</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Gear Calculator</h4>
-                  <p className="text-sm text-gray-600">Compare gear ratios and speeds</p>
+                  <h4 className="font-semibold text-gray-900 mb-1">Gear Ratio Calculator</h4>
+                  <p className="text-sm text-gray-600">Compare current vs proposed setups</p>
                   {profile?.subscription_status !== 'premium' && (
                     <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
                       Premium
@@ -190,7 +190,34 @@ export default function Garage() {
                 </div>
               </Link>
 
-              {/* Tire Pressure Calculator */}
+              {/* Parts Compatibility Checker - Premium */}
+              <Link
+                href="/calculators/compatibility"
+                className={`p-4 rounded-lg border-2 transition-colors ${
+                  profile?.subscription_status === 'premium'
+                    ? 'border-green-200 bg-green-50 hover:border-green-300'
+                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                }`}
+                onClick={(e) => {
+                  if (profile?.subscription_status !== 'premium') {
+                    e.preventDefault()
+                    setShowUpgradeModal(true)
+                  }
+                }}
+              >
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🔍</div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Parts Compatibility</h4>
+                  <p className="text-sm text-gray-600">Check if parts work together</p>
+                  {profile?.subscription_status !== 'premium' && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                      Premium
+                    </span>
+                  )}
+                </div>
+              </Link>
+
+              {/* Tire Pressure Calculator - Free */}
               <Link
                 href="/calculators/tire-pressure"
                 className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50 hover:border-blue-300 transition-colors"
@@ -202,19 +229,7 @@ export default function Garage() {
                 </div>
               </Link>
 
-              {/* Compatibility Checker */}
-              <Link
-                href="/calculators/gear"
-                className="p-4 rounded-lg border-2 border-green-200 bg-green-50 hover:border-green-300 transition-colors"
-              >
-                <div className="text-center">
-                  <div className="text-3xl mb-2">🔍</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Gear Compatibility</h4>
-                  <p className="text-sm text-gray-600">Check gear compatibility</p>
-                </div>
-              </Link>
-
-              {/* Suspension Setup Calculator */}
+              {/* Suspension Setup Tool - Free */}
               <Link
                 href="/calculators/suspension"
                 className="p-4 rounded-lg border-2 border-orange-200 bg-orange-50 hover:border-orange-300 transition-colors"
@@ -223,6 +238,60 @@ export default function Garage() {
                   <div className="text-3xl mb-2">🔧</div>
                   <h4 className="font-semibold text-gray-900 mb-1">Suspension Setup</h4>
                   <p className="text-sm text-gray-600">Calculate suspension settings</p>
+                </div>
+              </Link>
+
+              {/* Chain Length Calculator - Premium */}
+              <Link
+                href="/calculators/chain-length"
+                className={`p-4 rounded-lg border-2 transition-colors ${
+                  profile?.subscription_status === 'premium'
+                    ? 'border-yellow-200 bg-yellow-50 hover:border-yellow-300'
+                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                }`}
+                onClick={(e) => {
+                  if (profile?.subscription_status !== 'premium') {
+                    e.preventDefault()
+                    setShowUpgradeModal(true)
+                  }
+                }}
+              >
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🔗</div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Chain Length</h4>
+                  <p className="text-sm text-gray-600">Calculate optimal chain length</p>
+                  {profile?.subscription_status !== 'premium' && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                      Premium
+                    </span>
+                  )}
+                </div>
+              </Link>
+
+              {/* Spoke Tension Calculator - Premium */}
+              <Link
+                href="/calculators/spoke-tension"
+                className={`p-4 rounded-lg border-2 transition-colors ${
+                  profile?.subscription_status === 'premium'
+                    ? 'border-red-200 bg-red-50 hover:border-red-300'
+                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                }`}
+                onClick={(e) => {
+                  if (profile?.subscription_status !== 'premium') {
+                    e.preventDefault()
+                    setShowUpgradeModal(true)
+                  }
+                }}
+              >
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🎯</div>
+                  <h4 className="font-semibold text-gray-900 mb-1">Spoke Tension</h4>
+                  <p className="text-sm text-gray-600">Calculate proper spoke tension</p>
+                  {profile?.subscription_status !== 'premium' && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                      Premium
+                    </span>
+                  )}
                 </div>
               </Link>
               
