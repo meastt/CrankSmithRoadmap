@@ -112,17 +112,29 @@ export default function SuspensionCalculator() {
       return
     }
 
+    // Transform bikes data to match our interface
+    const transformedBikes = (bikesData || []).map((bike: any) => ({
+      ...bike,
+      bike_components: bike.bike_components.map((bc: any) => ({
+        ...bc,
+        components: {
+          ...bc.components,
+          component_categories: bc.components.component_categories || { name: 'Unknown' }
+        }
+      }))
+    }));
+
     // Store all bikes
-    setAllBikes(bikesData || [])
+    setAllBikes(transformedBikes as Bike[])
 
     // Filter bikes that have suspension components
-    const mtbBikes = bikesData?.filter(bike => 
+    const mtbBikes = transformedBikes.filter(bike => 
       bike.bike_components.some(bc => 
         bc.components.component_categories.name === 'Fork' || bc.components.component_categories.name === 'Shock'
       )
     ) || []
 
-    setBikes(mtbBikes)
+    setBikes(mtbBikes as Bike[])
   }
 
   const selectBike = (bike: Bike) => {
