@@ -69,149 +69,187 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return
   }
 
-  // Get the subscription details
-  const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
-  
-  // Update user profile in Supabase
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      subscription_status: 'premium',
-      stripe_customer_id: session.customer as string,
-      stripe_subscription_id: subscription.id,
-      subscription_start_date: new Date((subscription as any).current_period_start * 1000).toISOString(),
-      subscription_end_date: new Date((subscription as any).current_period_end * 1000).toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', userId)
+  try {
+    // Get the subscription details with proper error handling
+    const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+    
+    // Validate subscription has required fields
+    if (!subscription.current_period_start || !subscription.current_period_end) {
+      console.error('Subscription missing period dates')
+      throw new Error('Invalid subscription data')
+    }
+    
+    // Update user profile in Supabase with proper typing
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_status: 'premium',
+        stripe_customer_id: session.customer as string,
+        stripe_subscription_id: subscription.id,
+        subscription_start_date: new Date(subscription.current_period_start * 1000).toISOString(),
+        subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
 
-  if (error) {
-    console.error('Failed to update user subscription:', error)
-    throw error
+    if (error) {
+      console.error('Failed to update user subscription:', error)
+      throw error
+    }
+
+    console.log('✅ User upgraded to premium:', userId)
+  } catch (stripeError) {
+    console.error('Stripe operation failed in handleCheckoutCompleted:', stripeError)
+    throw stripeError
   }
-
-  console.log('✅ User upgraded to premium:', userId)
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   console.log('🔄 Processing subscription update:', subscription.id)
   
-  // Find user by stripe_subscription_id
-  const { data: profile, error: findError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('stripe_subscription_id', subscription.id)
-    .single()
+  try {
+    // Find user by stripe_subscription_id
+    const { data: profile, error: findError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('stripe_subscription_id', subscription.id)
+      .single()
 
-  if (findError || !profile) {
-    console.error('User not found for subscription:', subscription.id)
-    return
-  }
+    if (findError || !profile) {
+      console.error('User not found for subscription:', subscription.id)
+      return
+    }
 
-  // Determine subscription status
-  let subscriptionStatus = 'free'
-  if (subscription.status === 'active') {
-    subscriptionStatus = 'premium'
-  } else if (subscription.status === 'past_due') {
-    subscriptionStatus = 'past_due'
-  } else if (['canceled', 'unpaid'].includes(subscription.status)) {
-    subscriptionStatus = 'canceled'
-  }
+    // Validate subscription has required fields
+    if (!subscription.current_period_start || !subscription.current_period_end) {
+      console.error('Subscription missing period dates')
+      throw new Error('Invalid subscription data')
+    }
 
-  // Update subscription details
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      subscription_status: subscriptionStatus,
-      subscription_start_date: new Date((subscription as any).current_period_start * 1000).toISOString(),
-      subscription_end_date: new Date((subscription as any).current_period_end * 1000).toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', profile.id)
+    // Determine subscription status
+    let subscriptionStatus = 'free'
+    if (subscription.status === 'active') {
+      subscriptionStatus = 'premium'
+    } else if (subscription.status === 'past_due') {
+      subscriptionStatus = 'past_due'
+    } else if (['canceled', 'unpaid'].includes(subscription.status)) {
+      subscriptionStatus = 'canceled'
+    }
 
-  if (error) {
-    console.error('Failed to update subscription:', error)
+    // Update subscription details with proper typing
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_status: subscriptionStatus,
+        subscription_start_date: new Date(subscription.current_period_start * 1000).toISOString(),
+        subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', profile.id)
+
+    if (error) {
+      console.error('Failed to update subscription:', error)
+      throw error
+    }
+
+    console.log('✅ Subscription updated for user:', profile.id, 'Status:', subscriptionStatus)
+  } catch (error) {
+    console.error('Error in handleSubscriptionUpdated:', error)
     throw error
   }
-
-  console.log('✅ Subscription updated for user:', profile.id, 'Status:', subscriptionStatus)
 }
 
 async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
   console.log('❌ Processing subscription cancellation:', subscription.id)
   
-  // Find user by stripe_subscription_id
-  const { data: profile, error: findError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('stripe_subscription_id', subscription.id)
-    .single()
+  try {
+    // Find user by stripe_subscription_id
+    const { data: profile, error: findError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('stripe_subscription_id', subscription.id)
+      .single()
 
-  if (findError || !profile) {
-    console.error('User not found for subscription:', subscription.id)
-    return
-  }
+    if (findError || !profile) {
+      console.error('User not found for subscription:', subscription.id)
+      return
+    }
 
-  // Update to canceled status
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      subscription_status: 'canceled',
-      subscription_end_date: new Date((subscription as any).current_period_end * 1000).toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', profile.id)
+    // Validate subscription has required field
+    if (!subscription.current_period_end) {
+      console.error('Subscription missing period end date')
+      throw new Error('Invalid subscription data')
+    }
 
-  if (error) {
-    console.error('Failed to update canceled subscription:', error)
+    // Update to canceled status with proper typing
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_status: 'canceled',
+        subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', profile.id)
+
+    if (error) {
+      console.error('Failed to update canceled subscription:', error)
+      throw error
+    }
+
+    console.log('✅ Subscription canceled for user:', profile.id)
+  } catch (error) {
+    console.error('Error in handleSubscriptionCanceled:', error)
     throw error
   }
-
-  console.log('✅ Subscription canceled for user:', profile.id)
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
   console.log('💸 Processing payment failure for invoice:', invoice.id)
   
-  // Handle subscription property properly
-  let subscriptionId: string | undefined
-  
-  if (typeof (invoice as any).subscription === 'string') {
-    subscriptionId = (invoice as any).subscription
-  } else if ((invoice as any).subscription && typeof (invoice as any).subscription === 'object') {
-    subscriptionId = (invoice as any).subscription.id
-  }
+  try {
+    // Handle subscription property with proper typing
+    let subscriptionId: string | undefined
+    
+    if (typeof invoice.subscription === 'string') {
+      subscriptionId = invoice.subscription
+    } else if (invoice.subscription && typeof invoice.subscription === 'object') {
+      subscriptionId = invoice.subscription.id
+    }
 
-  if (!subscriptionId) {
-    console.log('No subscription associated with this invoice')
-    return
-  }
+    if (!subscriptionId) {
+      console.log('No subscription associated with this invoice')
+      return
+    }
 
-  // Find user by stripe_subscription_id
-  const { data: profile, error: findError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('stripe_subscription_id', subscriptionId)
-    .single()
+    // Find user by stripe_subscription_id
+    const { data: profile, error: findError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('stripe_subscription_id', subscriptionId)
+      .single()
 
-  if (findError || !profile) {
-    console.error('User not found for subscription:', subscriptionId)
-    return
-  }
+    if (findError || !profile) {
+      console.error('User not found for subscription:', subscriptionId)
+      return
+    }
 
-  // Update to past_due status
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      subscription_status: 'past_due',
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', profile.id)
+    // Update to past_due status
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        subscription_status: 'past_due',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', profile.id)
 
-  if (error) {
-    console.error('Failed to update payment failed status:', error)
+    if (error) {
+      console.error('Failed to update payment failed status:', error)
+      throw error
+    }
+
+    console.log('✅ Payment failure processed for user:', profile.id)
+  } catch (error) {
+    console.error('Error in handlePaymentFailed:', error)
     throw error
   }
-
-  console.log('✅ Payment failure processed for user:', profile.id)
 }

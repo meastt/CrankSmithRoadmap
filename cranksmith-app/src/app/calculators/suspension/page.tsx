@@ -16,7 +16,7 @@ interface SuspensionComponent {
   baseline_compression_clicks?: number
   component_categories: {
     name: string
-  }[]  // FIXED: This should be an array
+  }  // CORRECTED: Single object, not array
 }
 
 interface BikeComponent {
@@ -119,7 +119,7 @@ export default function SuspensionCalculator() {
     const mtbBikes = bikesData?.filter(bike => 
       bike.bike_components.some(bc => 
         bc.components.some(comp => 
-          comp.component_categories.some((cat: {name: string}) => cat.name === 'Fork' || cat.name === 'Shock')
+          comp.component_categories.name === 'Fork' || comp.component_categories.name === 'Shock'
         )
       )
     ) || []
@@ -150,13 +150,13 @@ export default function SuspensionCalculator() {
       forkComponent = selectedBike.bike_components
         .flatMap(bc => bc.components)  // Flatten the components arrays
         .find(comp => 
-          comp.component_categories.some((cat: {name: string}) => cat.name === 'Fork')
+          comp.component_categories.name === 'Fork'
         )
 
       shockComponent = selectedBike.bike_components
         .flatMap(bc => bc.components)  // Flatten the components arrays
         .find(comp => 
-          comp.component_categories.some((cat: {name: string}) => cat.name === 'Shock')
+          comp.component_categories.name === 'Shock'
         )
     } else {
       // Use manual inputs - create mock components for calculation
@@ -168,7 +168,7 @@ export default function SuspensionCalculator() {
           model: model || 'Fork',
           description: manualFork,
           baseline_rebound_clicks: 8,
-          component_categories: [{ name: 'Fork' }]  // FIXED: Should be an array
+          component_categories: { name: 'Fork' }  // CORRECTED: Single object
         }
       }
       
@@ -181,7 +181,7 @@ export default function SuspensionCalculator() {
           description: manualShock,
           baseline_rebound_clicks: 8,
           baseline_compression_clicks: 6,
-          component_categories: [{ name: 'Shock' }]  // FIXED: Should be an array
+          component_categories: { name: 'Shock' }  // CORRECTED: Single object
         }
       }
     }
@@ -279,7 +279,7 @@ export default function SuspensionCalculator() {
   const hasSuspension = useGarageMode 
     ? selectedBike?.bike_components.some(bc => 
         bc.components.some(comp => 
-          comp.component_categories.some((cat: {name: string}) => cat.name === 'Fork' || cat.name === 'Shock')
+          comp.component_categories.name === 'Fork' || comp.component_categories.name === 'Shock'
         )
       )
     : manualFork || manualShock
@@ -410,16 +410,16 @@ export default function SuspensionCalculator() {
                           <h4 className="font-medium text-gray-900 mb-2">Suspension Components:</h4>
                           {selectedBike.bike_components
                             .flatMap(bc => bc.components)  // Flatten first
-                            .filter(comp => comp.component_categories.some((cat: {name: string}) => ['Fork', 'Shock'].includes(cat.name)))
+                            .filter(comp => ['Fork', 'Shock'].includes(comp.component_categories.name))
                             .map(comp => (
                               <div key={comp.id} className="text-sm text-gray-700">
-                                • {comp.component_categories.find((cat: {name: string}) => ['Fork', 'Shock'].includes(cat.name))?.name}: {comp.brand} {comp.model}
+                                • {comp.component_categories.name}: {comp.brand} {comp.model}
                               </div>
                             ))
                           }
                           {selectedBike.bike_components
                             .flatMap(bc => bc.components)
-                            .filter(comp => comp.component_categories.some((cat: {name: string}) => ['Fork', 'Shock'].includes(cat.name)))
+                            .filter(comp => ['Fork', 'Shock'].includes(comp.component_categories.name))
                             .length === 0 && (
                             <div className="text-sm text-gray-500">
                               No suspension components found on this bike. Try Quick Mode instead.

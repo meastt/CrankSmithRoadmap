@@ -24,7 +24,7 @@ interface Bike {
       casing_type?: 'standard' | 'supple' | 'ultra-supple';
       internal_rim_width_mm?: number;
       rim_type?: 'hooked' | 'hookless';
-      component_categories: { name: string }[];
+      component_categories: { name: string };
     }[];
   }[];
 }
@@ -153,11 +153,11 @@ export default function TirePressureCalculatorPage() {
     const allComponents = bike.bike_components.flatMap(bc => bc.components);
     
     const tire = allComponents.find(comp => 
-      comp.component_categories.some(cat => cat.name === 'Tire')
+      comp.component_categories.name === 'Tire'
     );
     
     const wheel = allComponents.find(comp => 
-      comp.component_categories.some(cat => cat.name === 'Wheelset')
+      comp.component_categories.name === 'Wheelset'
     );
 
     dispatch({
