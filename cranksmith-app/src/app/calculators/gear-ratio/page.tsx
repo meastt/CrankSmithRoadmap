@@ -245,10 +245,15 @@ export default function GearRatioCalculatorPage() {
         ...bike,
         bike_components: bike.bike_components.map((bc: any) => ({
           ...bc,
-          components: bc.components.map((comp: any) => ({
-            ...comp,
-            component_categories: comp.component_categories || { name: 'Unknown' }
-          }))
+          components: Array.isArray(bc.components) 
+            ? bc.components.map((comp: any) => ({
+                ...comp,
+                component_categories: comp.component_categories || { name: 'Unknown' }
+              }))
+            : [{
+                ...bc.components,
+                component_categories: bc.components.component_categories || { name: 'Unknown' }
+              }]
         }))
       }));
       setBikes(transformedBikes as Bike[]);
