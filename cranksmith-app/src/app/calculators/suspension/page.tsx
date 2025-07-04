@@ -168,8 +168,6 @@ export default function SuspensionCalculator() {
           brand: manualForkBrand,
           model: manualForkModel,
           description: `${manualForkBrand} ${manualForkModel}`,
-          travel_mm: manualTravel,
-          stanchion_diameter_mm: manualStanchionSize,
           component_categories: { name: 'Fork' }
         }
       }
