@@ -20,7 +20,7 @@ interface SuspensionComponent {
 }
 
 interface BikeComponent {
-  components: SuspensionComponent[]  // FIXED: Should be an array
+  components: SuspensionComponent  // CORRECTED: Single object to match database
 }
 
 interface Bike {
@@ -118,9 +118,7 @@ export default function SuspensionCalculator() {
     // Filter bikes that have suspension components
     const mtbBikes = bikesData?.filter(bike => 
       bike.bike_components.some(bc => 
-        bc.components.some(comp => 
-          comp.component_categories.name === 'Fork' || comp.component_categories.name === 'Shock'
-        )
+        bc.components.component_categories.name === 'Fork' || bc.components.component_categories.name === 'Shock'
       )
     ) || []
 
@@ -148,13 +146,13 @@ export default function SuspensionCalculator() {
     if (useGarageMode && selectedBike) {
       // Use components from selected garage bike
       forkComponent = selectedBike.bike_components
-        .flatMap(bc => bc.components)  // Flatten the components arrays
+        .map(bc => bc.components)  // Get all components
         .find(comp => 
           comp.component_categories.name === 'Fork'
         )
 
       shockComponent = selectedBike.bike_components
-        .flatMap(bc => bc.components)  // Flatten the components arrays
+        .map(bc => bc.components)  // Get all components
         .find(comp => 
           comp.component_categories.name === 'Shock'
         )
@@ -278,9 +276,7 @@ export default function SuspensionCalculator() {
 
   const hasSuspension = useGarageMode 
     ? selectedBike?.bike_components.some(bc => 
-        bc.components.some(comp => 
-          comp.component_categories.name === 'Fork' || comp.component_categories.name === 'Shock'
-        )
+        bc.components.component_categories.name === 'Fork' || bc.components.component_categories.name === 'Shock'
       )
     : manualFork || manualShock
 
@@ -409,7 +405,7 @@ export default function SuspensionCalculator() {
                         <div className="mt-4 p-3 bg-white rounded border">
                           <h4 className="font-medium text-gray-900 mb-2">Suspension Components:</h4>
                           {selectedBike.bike_components
-                            .flatMap(bc => bc.components)  // Flatten first
+                            .map(bc => bc.components)  // Get all components
                             .filter(comp => ['Fork', 'Shock'].includes(comp.component_categories.name))
                             .map(comp => (
                               <div key={comp.id} className="text-sm text-gray-700">
@@ -418,7 +414,7 @@ export default function SuspensionCalculator() {
                             ))
                           }
                           {selectedBike.bike_components
-                            .flatMap(bc => bc.components)
+                            .map(bc => bc.components)
                             .filter(comp => ['Fork', 'Shock'].includes(comp.component_categories.name))
                             .length === 0 && (
                             <div className="text-sm text-gray-500">
