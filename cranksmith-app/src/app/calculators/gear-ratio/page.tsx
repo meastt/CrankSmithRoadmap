@@ -263,7 +263,12 @@ export default function GearRatioCalculatorPage() {
     if (error) {
       console.error('Error fetching components:', error);
     } else {
-      setAvailableComponents((componentsData as Component[]) || []);
+      // Transform the data to match our interface
+      const transformedComponents = (componentsData || []).map((comp: any) => ({
+        ...comp,
+        component_categories: comp.component_categories[0] || { name: 'Unknown' }
+      }));
+      setAvailableComponents(transformedComponents as Component[]);
     }
   };
 
