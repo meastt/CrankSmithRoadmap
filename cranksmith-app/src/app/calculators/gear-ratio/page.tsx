@@ -240,7 +240,18 @@ export default function GearRatioCalculatorPage() {
     if (error) {
       console.error('Error fetching bikes:', error);
     } else {
-      setBikes((bikesData as Bike[]) || []);
+      // Transform the bikes data to match our interface
+      const transformedBikes = (bikesData || []).map((bike: any) => ({
+        ...bike,
+        bike_components: bike.bike_components.map((bc: any) => ({
+          ...bc,
+          components: bc.components.map((comp: any) => ({
+            ...comp,
+            component_categories: comp.component_categories || { name: 'Unknown' }
+          }))
+        }))
+      }));
+      setBikes(transformedBikes as Bike[]);
     }
   };
 
