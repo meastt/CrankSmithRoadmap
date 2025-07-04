@@ -128,8 +128,8 @@ export default function SuspensionCalculator() {
     setAllBikes(transformedBikes as Bike[])
 
     // Filter bikes that have suspension components
-    const mtbBikes = transformedBikes.filter(bike => 
-      bike.bike_components.some(bc => 
+    const mtbBikes = transformedBikes.filter((bike: Bike) => 
+      bike.bike_components.some((bc: BikeComponent) => 
         bc.components.component_categories.name === 'Fork' || bc.components.component_categories.name === 'Shock'
       )
     ) || []
