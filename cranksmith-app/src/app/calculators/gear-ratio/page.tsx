@@ -275,12 +275,12 @@ export default function GearRatioCalculatorPage() {
     if (error) {
       console.error('Error fetching available components:', JSON.stringify(error, null, 2));
     } else {
-      const transformedComponents: Component[] = (componentsData || []).map(transformComponentData);
+      const transformedComponents: Component[] = (componentsData || []).map(transformComponentData).filter(Boolean) as Component[];
       setAvailableComponents(transformedComponents);
     }
   };
 
-  const transformComponentData = (comp: any): Component => {
+  const transformComponentData = (comp: any): Component | undefined => {
     if (!comp) return undefined;
     return {
       ...comp,
@@ -293,7 +293,7 @@ export default function GearRatioCalculatorPage() {
     }
   };
 
-  const transformBikeData = (bike: any): Bike => {
+  const transformBikeData = (bike: any): Bike | undefined => {
     if (!bike) return undefined;
     return {
       ...bike,
