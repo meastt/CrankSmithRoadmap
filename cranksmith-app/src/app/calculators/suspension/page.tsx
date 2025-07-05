@@ -603,34 +603,52 @@ export default function SuspensionCalculator() {
               </div>
             )}
 
+            {/* Shock Results */}
             {shockResult && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-lg font-semibold">Shock Setup</h3>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Rear Shock Setup</h3>
                   {getAccuracyBadge(shockResult.accuracy)}
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-center p-4 bg-orange-50 rounded">
-                    <div className="text-2xl font-bold text-orange-600">{shockResult.airPressure}</div>
-                    <div className="text-sm text-gray-600">PSI</div>
+
+                <div className="grid md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="text-sm text-blue-800 font-medium">Air Pressure</div>
+                    <div className="text-2xl font-bold text-blue-600">{shockResult.airPressure}</div>
+                    <div className="text-xs text-blue-700">PSI</div>
                   </div>
-                  <div className="text-center p-4 bg-purple-50 rounded">
-                    <div className="text-2xl font-bold text-purple-600">{shockResult.targetSag}%</div>
-                    <div className="text-sm text-gray-600">Target Sag</div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="text-sm text-green-800 font-medium">Target Sag</div>
+                    <div className="text-2xl font-bold text-green-600">{shockResult.targetSag}</div>
+                    <div className="text-xs text-green-700">%</div>
                   </div>
-                </div>
-                
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-700">Rebound Clicks: {shockResult.reboundClicks}</p>
-                  <p className="text-xs text-gray-500">From fully closed (slow)</p>
+                  <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="text-sm text-orange-800 font-medium">Rebound</div>
+                    <div className="text-2xl font-bold text-orange-600">{shockResult.reboundClicks}</div>
+                    <div className="text-xs text-orange-700">clicks from fast</div>
+                  </div>
+                  {shockResult.compressionClicks && (
+                    <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+                      <div className="text-sm text-purple-800 font-medium">Compression</div>
+                      <div className="text-2xl font-bold text-purple-600">{shockResult.compressionClicks}</div>
+                      <div className="text-xs text-purple-700">clicks from open</div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  {shockResult.notes.map((note, index) => (
-                    <p key={index} className="text-sm text-gray-600">• {note}</p>
-                  ))}
-                </div>
+                {shockResult.notes.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-gray-900">Setup Notes:</h4>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {shockResult.notes.map((note, index) => (
+                        <li key={index} className="flex items-start space-x-2">
+                          <span className="text-indigo-500 mt-1">•</span>
+                          <span>{note}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
