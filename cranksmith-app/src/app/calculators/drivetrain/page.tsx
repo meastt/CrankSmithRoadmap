@@ -140,8 +140,8 @@ export default function DrivetrainCompatibilityChecker() {
       setCassettes(filteredCassettes)
     }
 
-    // Fetch derailleurs (real data from database)
-    const { data: derailleurData, error: derailleurError } = await supabase
+    // Try to fetch derailleurs with detailed specs, fall back to basic data if detail table doesn't exist
+    let { data: derailleurData, error: derailleurError } = await supabase
       .from('products')
       .select(`
         id, brand, model, description, product_type,
@@ -150,7 +150,34 @@ export default function DrivetrainCompatibilityChecker() {
       .eq('product_type', 'derailleur')
       .order('brand', { ascending: true })
 
-    if (!derailleurError && derailleurData) {
+    if (derailleurError) {
+      console.warn('Derailleurs detail table not found, falling back to basic product data:', derailleurError)
+      // Fallback: fetch basic product data without detail tables
+      const { data: basicDerailleurs, error: basicError } = await supabase
+        .from('products')
+        .select('id, brand, model, description, product_type')
+        .eq('product_type', 'derailleur')
+        .order('brand', { ascending: true })
+      
+      if (!basicError && basicDerailleurs) {
+        console.log('Basic derailleur data found:', basicDerailleurs.length, 'items')
+        // Create mock detail data for basic products
+        const derailleurs = basicDerailleurs.map(d => ({
+          ...d,
+          derailleurs: [{
+            speeds: undefined,
+            max_cog_capacity: undefined,
+            min_cog_capacity: undefined,
+            pull_ratio: undefined,
+            cage_length: undefined
+          }]
+        }))
+        setDerailleurs(derailleurs)
+      } else {
+        console.error('Error fetching basic derailleurs:', basicError)
+        setDerailleurs([])
+      }
+    } else if (derailleurData) {
       console.log('Derailleur data found:', derailleurData.length, 'items')
       console.log('Sample derailleur data:', derailleurData[0]) // Debug: show structure
       // Filter derailleurs that have valid derailleur data (single object or array)
@@ -159,12 +186,10 @@ export default function DrivetrainCompatibilityChecker() {
       ))
       console.log('Filtered derailleurs:', filteredDerailleurs.length, 'items')
       setDerailleurs(filteredDerailleurs)
-    } else {
-      console.error('Error fetching derailleurs:', derailleurError)
     }
 
-    // Fetch shifters (real data from database)
-    const { data: shifterData, error: shifterError } = await supabase
+    // Try to fetch shifters with detailed specs, fall back to basic data if detail table doesn't exist
+    let { data: shifterData, error: shifterError } = await supabase
       .from('products')
       .select(`
         id, brand, model, description, product_type,
@@ -173,7 +198,31 @@ export default function DrivetrainCompatibilityChecker() {
       .eq('product_type', 'shifter')
       .order('brand', { ascending: true })
 
-    if (!shifterError && shifterData) {
+    if (shifterError) {
+      console.warn('Shifters detail table not found, falling back to basic product data:', shifterError)
+      // Fallback: fetch basic product data without detail tables
+      const { data: basicShifters, error: basicError } = await supabase
+        .from('products')
+        .select('id, brand, model, description, product_type')
+        .eq('product_type', 'shifter')
+        .order('brand', { ascending: true })
+      
+      if (!basicError && basicShifters) {
+        console.log('Basic shifter data found:', basicShifters.length, 'items')
+        // Create mock detail data for basic products
+        const shifters = basicShifters.map(s => ({
+          ...s,
+          shifters: [{
+            speeds: undefined,
+            pull_ratio: undefined
+          }]
+        }))
+        setShifters(shifters)
+      } else {
+        console.error('Error fetching basic shifters:', basicError)
+        setShifters([])
+      }
+    } else if (shifterData) {
       console.log('Shifter data found:', shifterData.length, 'items')
       console.log('Sample shifter data:', shifterData[0]) // Debug: show structure
       // Filter shifters that have valid shifter data (single object or array)
@@ -182,8 +231,6 @@ export default function DrivetrainCompatibilityChecker() {
       ))
       console.log('Filtered shifters:', filteredShifters.length, 'items')
       setShifters(filteredShifters)
-    } else {
-      console.error('Error fetching shifters:', shifterError)
     }
   }
 
