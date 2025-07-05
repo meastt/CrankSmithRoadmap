@@ -145,7 +145,45 @@ function calculateGearRatios(setup: GearSetup, cadence: number = 90): GearRatio[
   
   return gears.sort((a, b) => a.ratio - b.ratio);
 }
-function compareSetups(currentSetup: GearSetup, proposedSetup: GearSetup): ComparisonResult { const currentGears = calculateGearRatios(currentSetup); const proposedGears = calculateGearRatios(proposedSetup); if (currentGears.length === 0 || proposedGears.length === 0) { return { easiestGearImprovement: 0, hardestGearImprovement: 0, gearRange: { current: 0, proposed: 0, improvement: 0 } }; } const currentEasiest = currentGears[0].ratio; const currentHardest = currentGears[currentGears.length - 1].ratio; const proposedEasiest = proposedGears[0].ratio; const proposedHardest = proposedGears[proposedGears.length - 1].ratio; const easiestGearImprovement = ((currentEasiest - proposedEasiest) / currentEasiest) * 100; const hardestGearImprovement = ((proposedHardest - currentHardest) / currentHardest) * 100; const currentRange = currentHardest / currentEasiest; const proposedRange = proposedHardest / proposedEasiest; const rangeImprovement = ((proposedRange - currentRange) / currentRange) * 100; return { easiestGearImprovement: Math.round(easiestGearImprovement * 10) / 10, hardestGearImprovement: Math.round(hardestGearImprovement * 10) / 10, gearRange: { current: Math.round(currentRange * 100) / 100, proposed: Math.round(proposedRange * 100) / 100, improvement: Math.round(rangeImprovement * 10) / 10 } }; }
+function compareSetups(currentSetup: GearSetup, proposedSetup: GearSetup): ComparisonResult {
+  const currentGears = calculateGearRatios(currentSetup);
+  const proposedGears = calculateGearRatios(proposedSetup);
+  
+  if (currentGears.length === 0 || proposedGears.length === 0) {
+    return {
+      easiestGearImprovement: 0,
+      hardestGearImprovement: 0,
+      gearRange: { current: 0, proposed: 0, improvement: 0 }
+    };
+  }
+
+  // Find easiest gears (lowest ratios for climbing)
+  const currentEasiest = Math.min(...currentGears.map(g => g.ratio));
+  const proposedEasiest = Math.min(...proposedGears.map(g => g.ratio));
+  
+  // Find hardest gears (highest ratios for top speed)
+  const currentHardest = Math.max(...currentGears.map(g => g.ratio));
+  const proposedHardest = Math.max(...proposedGears.map(g => g.ratio));
+  
+  // Calculate improvements (negative ratio change = easier climbing)
+  const easiestGearImprovement = Math.round(((proposedEasiest - currentEasiest) / currentEasiest) * -100);
+  const hardestGearImprovement = Math.round(((proposedHardest - currentHardest) / currentHardest) * 100);
+  
+  // Calculate gear range improvements
+  const currentRange = currentHardest / currentEasiest;
+  const proposedRange = proposedHardest / proposedEasiest;
+  const rangeImprovement = Math.round(((proposedRange - currentRange) / currentRange) * 100);
+  
+  return {
+    easiestGearImprovement,
+    hardestGearImprovement,
+    gearRange: {
+      current: Math.round(currentRange * 100) / 100,
+      proposed: Math.round(proposedRange * 100) / 100,
+      improvement: rangeImprovement
+    }
+  };
+}
 
 
 // --- Main Component ---
