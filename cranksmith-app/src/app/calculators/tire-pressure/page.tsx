@@ -185,18 +185,44 @@ export default function TirePressureCalculatorPage() {
   const handleCalculate = (e: FormEvent) => {
     e.preventDefault();
     setCalculating(true);
-    // Use a timeout to simulate calculation and show loading state
+    
+    // Add validation to prevent calculation with invalid data
+    const riderWeight = Number(formState.riderWeightLbs);
+    const bikeWeight = Number(formState.bikeWeightLbs);
+    const rimWidth = Number(formState.rimWidthMm);
+    
+    if (isNaN(riderWeight) || riderWeight <= 0) {
+      alert('Please enter a valid rider weight');
+      setCalculating(false);
+      return;
+    }
+    
+    if (isNaN(bikeWeight) || bikeWeight <= 0) {
+      alert('Please enter a valid bike weight');
+      setCalculating(false);
+      return;
+    }
+    
+    if (isNaN(rimWidth) || rimWidth <= 0) {
+      alert('Please enter a valid rim width');
+      setCalculating(false);
+      return;
+    }
+
     setTimeout(() => {
-        // Ensure that empty strings are treated as 0 for calculation
+        // Ensure that all numeric values are properly converted
         const calculationInputs: AdvancedCalculationInputs = {
             ...formState,
-            riderWeightLbs: Number(formState.riderWeightLbs) || 0,
-            bikeWeightLbs: Number(formState.bikeWeightLbs) || 0,
-            rimWidthMm: Number(formState.rimWidthMm) || 0,
+            riderWeightLbs: riderWeight,
+            bikeWeightLbs: bikeWeight,
+            rimWidthMm: rimWidth,
+            tireWidthMm: Number(formState.tireWidthMm) || 25, // Default to 25mm if invalid
         };
+        
         const pressureResult = calculateAdvancedPressure(calculationInputs);
         setResult(pressureResult);
         setCalculating(false);
+        
         // Optional: Scroll to results on mobile
         const resultsEl = document.getElementById('results-section');
         if (resultsEl) {

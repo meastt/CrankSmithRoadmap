@@ -63,23 +63,16 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
           {user && (
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600 hidden sm:block">
-                  {user.email}
-                </span>
-                {profile?.subscription_status === 'free' && (
-                  <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
-                    Free
-                  </span>
-                )}
+                <span className="text-sm text-gray-600">{user.email}</span>
                 {profile?.subscription_status === 'premium' && (
-                  <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
+                  <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
                     Premium
                   </span>
                 )}
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Sign Out
               </button>
