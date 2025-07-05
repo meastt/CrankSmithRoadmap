@@ -188,7 +188,7 @@ function compareSetups(currentSetup: GearSetup, proposedSetup: GearSetup): Compa
 
 // --- Main Component ---
 export default function GearRatioCalculatorPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [bikes, setBikes] = useState<Bike[]>([]);
   const [selectedBikeId, setSelectedBikeId] = useState<string>('');
@@ -253,13 +253,14 @@ export default function GearRatioCalculatorPage() {
       console.log('Successfully fetched bikes data:', bikesData); 
       
       if (bikesData) {
-        const transformedBikes: Bike[] = bikesData.map(transformBikeData).filter(Boolean);
+        const transformedBikes: Bike[] = bikesData.map(transformBikeData).filter(Boolean) as Bike[];
         setBikes(transformedBikes);
       } else {
         setBikes([]);
       }
     }
   };
+  
 
   const fetchAvailableComponents = async () => {
     const { data: componentsData, error } = await supabase
@@ -536,7 +537,7 @@ const ProposedSetupForm: FC<{ setup: GearSetup; setSetup: (setup: GearSetup) => 
           min="1000"
           max="3000"
         />
-        <p className="mt-1 text-xs text-gray-500">Overrides the selected bike's wheel circumference for this comparison.</p>
+        <p className="mt-1 text-xs text-gray-500">Overrides the selected bike&rsquo;s wheel circumference for this comparison.</p>
       </div>
     </div>
   );

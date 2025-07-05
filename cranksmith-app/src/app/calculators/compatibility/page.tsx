@@ -37,11 +37,11 @@ interface CompatibilityResult {
 }
 
 export default function CompatibilityChecker() {
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [, setUser] = useState<User | null>(null)
+  const [, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [components, setComponents] = useState<Component[]>([])
-  const [standards, setStandards] = useState<Standard[]>([])
+  const [, ] = useState<Standard[]>([])
   
   // Form state
   const [selectedComponent1, setSelectedComponent1] = useState<string>('')
@@ -264,14 +264,14 @@ export default function CompatibilityChecker() {
     setChecking(false)
   }
 
-  const getResultColor = (type: string) => {
-    switch (type) {
-      case 'direct': return 'green'
-      case 'adapter': return 'yellow'
-      case 'incompatible': return 'red'
-      default: return 'gray'
-    }
-  }
+  // const getResultColor = (type: string) => {
+  //   switch (type) {
+  //     case 'direct': return 'green'
+  //     case 'adapter': return 'yellow'
+  //     case 'incompatible': return 'red'
+  //     default: return 'gray'
+  //   }
+  // }
 
   const getResultMessage = (type: string) => {
     switch (type) {

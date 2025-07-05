@@ -8,8 +8,6 @@ import Link from 'next/link'
 import { 
   calculateSuspensionSetup, 
   getForkSpecs, 
-  getShockSpecs,
-  FORK_DATABASE,
   SHOCK_DATABASE,
   type SuspensionCalculationInputs,
   type SuspensionResult
@@ -142,7 +140,7 @@ export default function SuspensionCalculator() {
       return
     }
 
-    const transformedBikes = (bikesData || []).map(bike => ({
+    const transformedBikes = (bikesData || []).map((bike: any) => ({
       ...bike,
       bike_components: bike.bike_components.map((bc: any) => ({
         components: {
@@ -534,7 +532,7 @@ export default function SuspensionCalculator() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Riding Style</label>
               <select
                 value={ridingStyle}
-                onChange={(e) => setRidingStyle(e.target.value as any)}
+                onChange={(e) => setRidingStyle(e.target.value as 'xc' | 'trail' | 'enduro' | 'dh' | 'casual')}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="xc">Cross Country (efficiency focused)</option>

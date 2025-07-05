@@ -253,7 +253,49 @@ export default function CalculatorsPage() {
 
         </div>
 
-        {/* Upgrade Modal would go here */}
+        {/* Upgrade Modal */}
+        {showUpgradeModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-md mx-4">
+              <div className="text-center">
+                <div className="text-4xl mb-4">🚀</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Premium Feature
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  This calculator is available with Premium. Upgrade to access all advanced tools!
+                </p>
+                
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold text-gray-900 mb-2">Premium Features:</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>✅ Gear ratio calculator</li>
+                    <li>✅ Parts compatibility checker</li>
+                    <li>✅ Chain length calculator</li>
+                    <li>✅ Spoke tension calculator</li>
+                    <li>✅ Enhanced garage features</li>
+                  </ul>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowUpgradeModal(false)}
+                    className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Maybe Later
+                  </button>
+                  <Link
+                    href="/upgrade"
+                    className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-center"
+                    onClick={() => setShowUpgradeModal(false)}
+                  >
+                    Upgrade Now
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

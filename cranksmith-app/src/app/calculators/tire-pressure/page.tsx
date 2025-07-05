@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState, useEffect, useReducer, FC, ChangeEvent, FormEvent } from 'react'
+import { useState, useEffect, useReducer, FC, FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
@@ -417,8 +417,8 @@ const CalculatorForm: FC<{
             required
           >
             <option value="700c">700c (Road/Gravel)</option>
-            <option value="650b">650b (27.5")</option>
-            <option value="29er">29er (29")</option>
+            <option value="650b">650b (27.5&quot;)</option>
+            <option value="29er">29er (29&quot;)</option>
           </select>
         </div>
         <div>

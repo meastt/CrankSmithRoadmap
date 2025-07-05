@@ -9,7 +9,7 @@ const WEIGHT_DISTRIBUTION = {
 };
 
 // Target tire deflection (or "drop") as a percentage. 15% is a common starting point.
-const TARGET_TIRE_DROP = 0.15;
+// const TARGET_TIRE_DROP = 0.15; // Currently unused
 
 // Casing efficiency factor. Supple casings deform more easily and require less pressure.
 // These are multipliers. 1.0 is the baseline.
@@ -101,8 +101,8 @@ export function calculateAdvancedPressure(inputs: AdvancedCalculationInputs): Pr
   // Pressure (PSI) = (C * Load_lbs) / TireWidth_in
   const calculateBasePsi = (loadLbs: number) => (1.56 * loadLbs) / tireWidthInches;
 
-  let baseFrontPsi = calculateBasePsi(frontLoadLbs);
-  let baseRearPsi = calculateBasePsi(rearLoadLbs);
+  const baseFrontPsi = calculateBasePsi(frontLoadLbs);
+  const baseRearPsi = calculateBasePsi(rearLoadLbs);
 
   // Apply adjustment factors
   const casingAdjustment = CASING_FACTOR[tireCasing];
