@@ -140,68 +140,51 @@ export default function DrivetrainCompatibilityChecker() {
       setCassettes(filteredCassettes)
     }
 
-    // For now, create mock derailleur and shifter data since those tables don't exist yet
-    // This will let you test the UI logic while the database is being set up
-    const mockDerailleurs = [
-      {
-        id: 'mock-rd-1',
-        brand: 'SRAM',
-        model: 'GX Eagle (Mock)',
-        description: 'Mock derailleur for testing',
-        product_type: 'derailleur',
-        derailleurs: [{
-          speeds: 12,
-          max_cog_capacity: 50,
-          min_cog_capacity: 10,
-          pull_ratio: 'SRAM',
-          cage_length: 'long'
-        }]
-      },
-      {
-        id: 'mock-rd-2', 
-        brand: 'Shimano',
-        model: 'SLX M7100 (Mock)',
-        description: 'Mock derailleur for testing',
-        product_type: 'derailleur',
-        derailleurs: [{
-          speeds: 12,
-          max_cog_capacity: 51,
-          min_cog_capacity: 10,
-          pull_ratio: 'Shimano',
-          cage_length: 'long'
-        }]
-      }
-    ]
+    // Fetch derailleurs (real data from database)
+    const { data: derailleurData, error: derailleurError } = await supabase
+      .from('products')
+      .select(`
+        id, brand, model, description, product_type,
+        derailleurs (speeds, max_cog_capacity, min_cog_capacity, pull_ratio, cage_length)
+      `)
+      .eq('product_type', 'derailleur')
+      .order('brand', { ascending: true })
 
-    const mockShifters = [
-      {
-        id: 'mock-shift-1',
-        brand: 'SRAM',
-        model: 'GX Eagle Trigger (Mock)',
-        description: 'Mock shifter for testing',
-        product_type: 'shifter',
-        shifters: [{
-          speeds: 12,
-          pull_ratio: 'SRAM'
-        }]
-      },
-      {
-        id: 'mock-shift-2',
-        brand: 'Shimano',
-        model: 'SLX M7100 (Mock)', 
-        description: 'Mock shifter for testing',
-        product_type: 'shifter',
-        shifters: [{
-          speeds: 12,
-          pull_ratio: 'Shimano'
-        }]
-      }
-    ]
+    if (!derailleurError && derailleurData) {
+      console.log('Derailleur data found:', derailleurData.length, 'items')
+      console.log('Sample derailleur data:', derailleurData[0]) // Debug: show structure
+      // Filter derailleurs that have valid derailleur data (single object or array)
+      const filteredDerailleurs = derailleurData.filter(d => d.derailleurs && (
+        Array.isArray(d.derailleurs) ? d.derailleurs.length > 0 : d.derailleurs !== null
+      ))
+      console.log('Filtered derailleurs:', filteredDerailleurs.length, 'items')
+      setDerailleurs(filteredDerailleurs)
+    } else {
+      console.error('Error fetching derailleurs:', derailleurError)
+    }
 
-    setDerailleurs(mockDerailleurs)
-    setShifters(mockShifters)
-    
-    console.log('Using mock derailleurs and shifters for testing')
+    // Fetch shifters (real data from database)
+    const { data: shifterData, error: shifterError } = await supabase
+      .from('products')
+      .select(`
+        id, brand, model, description, product_type,
+        shifters (speeds, pull_ratio)
+      `)
+      .eq('product_type', 'shifter')
+      .order('brand', { ascending: true })
+
+    if (!shifterError && shifterData) {
+      console.log('Shifter data found:', shifterData.length, 'items')
+      console.log('Sample shifter data:', shifterData[0]) // Debug: show structure
+      // Filter shifters that have valid shifter data (single object or array)
+      const filteredShifters = shifterData.filter(s => s.shifters && (
+        Array.isArray(s.shifters) ? s.shifters.length > 0 : s.shifters !== null
+      ))
+      console.log('Filtered shifters:', filteredShifters.length, 'items')
+      setShifters(filteredShifters)
+    } else {
+      console.error('Error fetching shifters:', shifterError)
+    }
   }
 
   const checkDrivetrainCompatibility = async () => {
