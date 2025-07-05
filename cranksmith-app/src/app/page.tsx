@@ -12,7 +12,7 @@ export default function Home() {
       try {
         const { error } = await supabase.from('test').select('*').limit(1)
         if (error && error.code === '42P01') {
-          // Table doesn&apos;t exist, but connection works
+          // Table doesn't exist, but connection works
           setConnectionStatus('✅ Connected to Supabase!')
         } else if (error) {
           setConnectionStatus('❌ Connection error')
@@ -27,81 +27,99 @@ export default function Home() {
     testConnection()
   }, [])
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <main className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
       <div className="container mx-auto px-4 py-16">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold text-gray-900 mb-4">
-            🔧 CrankSmith
+          <h1 className="text-6xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+            🚴 CrankSmith
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl max-w-2xl mx-auto" style={{ color: 'var(--muted)' }}>
             Your digital garage for managing bikes, tracking components, and optimizing every ride.
           </p>
         </div>
 
         {/* Feature Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-            <div className="text-4xl mb-4">🚴‍♂️</div>
-            <h3 className="text-lg font-semibold mb-2">Digital Garage</h3>
-            <p className="text-gray-600 text-sm">
-              Manage multiple bikes and track every component
-            </p>
+          <div className="card text-center">
+            <div className="card-content">
+              <div className="text-4xl mb-4">🚴‍♂️</div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+                Digital Garage
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                Manage multiple bikes and track every component
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-            <div className="text-4xl mb-4">🔧</div>
-            <h3 className="text-lg font-semibold mb-2">Virtual Workbench</h3>
-            <p className="text-gray-600 text-sm">
-              Compatibility checks and upgrade planning
-            </p>
+          <div className="card text-center">
+            <div className="card-content">
+              <div className="text-4xl mb-4">🔧</div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+                Virtual Workbench
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                Compatibility checks and upgrade planning
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-            <div className="text-4xl mb-4">⚙️</div>
-            <h3 className="text-lg font-semibold mb-2">Ride Optimizer</h3>
-            <p className="text-gray-600 text-sm">
-              Tire pressure, gearing, and setup calculators
-            </p>
+          <div className="card text-center">
+            <div className="card-content">
+              <div className="text-4xl mb-4">⚙️</div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+                Ride Optimizer
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                Tire pressure, gearing, and setup calculators
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-            <div className="text-4xl mb-4">💬</div>
-            <h3 className="text-lg font-semibold mb-2">Knowledge Base</h3>
-            <p className="text-gray-600 text-sm">
-              Community reviews and expert advice
-            </p>
+          <div className="card text-center">
+            <div className="card-content">
+              <div className="text-4xl mb-4">💬</div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+                Knowledge Base
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                Community reviews and expert advice
+              </p>
+            </div>
           </div>
         </div>
 
         {/* CTA Section */}
         <div className="text-center">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Ready to Build Your Digital Garage?
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Start tracking your bikes and components today.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/signup"
-                className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-center"
-              >
-                Get Started Free
-              </a>
-              <a
-                href="/login"
-                className="bg-white text-indigo-600 border-2 border-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition-colors text-center"
-              >
-                Sign In
-              </a>
+          <div className="card max-w-md mx-auto">
+            <div className="card-content">
+              <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+                Ready to Build Your Digital Garage?
+              </h2>
+              <p className="mb-6" style={{ color: 'var(--muted)' }}>
+                Start tracking your bikes and components today.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a
+                  href="/signup"
+                  className="btn-primary text-center"
+                >
+                  Get Started Free
+                </a>
+                <a
+                  href="/login"
+                  className="btn-secondary text-center"
+                >
+                  Sign In
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-16 text-gray-500">
+        <div className="text-center mt-16" style={{ color: 'var(--muted-light)' }}>
           <p>Phase 0: Foundation & Scaffolding ✅</p>
           <p className="mt-2 text-sm">Supabase: {connectionStatus}</p>
         </div>

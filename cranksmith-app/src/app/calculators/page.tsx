@@ -48,29 +48,32 @@ export default function CalculatorsPage() {
   }, [router])
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+        <Header pageTitle="Loading..." />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header user={user || undefined} profile={profile || undefined} />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+      <Header 
+        pageTitle="Tools & Calculators" 
+        pageSubtitle="Pre-ride optimization tools to get your bike dialed in perfectly"
+      />
       
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Tools & Calculators
-          </h1>
-          <p className="text-gray-600">
-            Pre-ride optimization tools to get your bike dialed in perfectly.
-          </p>
-        </div>
-
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           {/* Gear Ratio Calculator */}
           <Link 
             href="/calculators/gear-ratio" 
-            className={`group ${profile?.subscription_status !== 'premium' ? 'cursor-not-allowed' : ''}`}
+            className={`component-card group ${profile?.subscription_status !== 'premium' ? 'cursor-not-allowed opacity-60' : 'hover:border-primary'}`}
             onClick={(e) => {
               if (profile?.subscription_status !== 'premium') {
                 e.preventDefault()
@@ -78,22 +81,20 @@ export default function CalculatorsPage() {
               }
             }}
           >
-            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow ${
-              profile?.subscription_status !== 'premium' ? 'opacity-75' : ''
-            }`}>
+            <div className="p-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-purple-100 p-3 rounded-lg">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--primary-light)' }}>
                   <div className="text-2xl">⚙️</div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
+                  <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
                     Gear Ratio Calculator
                   </h3>
-                  <p className="text-gray-600 mt-1 mb-3">
+                  <p className="text-sm mb-3" style={{ color: 'var(--muted)' }}>
                     Compare current vs proposed gear setups. See gains/losses in ratios, speeds, and climbing gears.
                   </p>
                   {profile?.subscription_status !== 'premium' && (
-                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                    <span className="badge badge-premium">
                       Premium Feature
                     </span>
                   )}
@@ -105,7 +106,7 @@ export default function CalculatorsPage() {
           {/* Parts Compatibility Checker */}
           <Link 
             href="/calculators/compatibility" 
-            className={`group ${profile?.subscription_status !== 'premium' ? 'cursor-not-allowed' : ''}`}
+            className={`component-card group ${profile?.subscription_status !== 'premium' ? 'cursor-not-allowed opacity-60' : 'hover:border-primary'}`}
             onClick={(e) => {
               if (profile?.subscription_status !== 'premium') {
                 e.preventDefault()
@@ -113,22 +114,20 @@ export default function CalculatorsPage() {
               }
             }}
           >
-            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow ${
-              profile?.subscription_status !== 'premium' ? 'opacity-75' : ''
-            }`}>
+            <div className="p-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-green-100 p-3 rounded-lg">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--success)', opacity: 0.2 }}>
                   <div className="text-2xl">🔍</div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
+                  <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
                     Parts Compatibility
                   </h3>
-                  <p className="text-gray-600 mt-1 mb-3">
+                  <p className="text-sm mb-3" style={{ color: 'var(--muted)' }}>
                     PC Part Picker for bikes. Check if your parts play nice together before you buy.
                   </p>
                   {profile?.subscription_status !== 'premium' && (
-                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                    <span className="badge badge-premium">
                       Premium Feature
                     </span>
                   )}
@@ -138,20 +137,20 @@ export default function CalculatorsPage() {
           </Link>
 
           {/* Tire Pressure Calculator */}
-          <Link href="/calculators/tire-pressure" className="group">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <Link href="/calculators/tire-pressure" className="component-card group hover:border-primary">
+            <div className="p-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-blue-100 p-3 rounded-lg">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--secondary)', opacity: 0.2 }}>
                   <div className="text-2xl">🛞</div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
+                  <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
                     Tire Pressure Calculator
                   </h3>
-                  <p className="text-gray-600 mt-1 mb-3">
+                  <p className="text-sm mb-3" style={{ color: 'var(--muted)' }}>
                     Get optimal tire pressure recommendations based on your weight, tire specs, and riding conditions.
                   </p>
-                  <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                  <span className="badge badge-free">
                     Free Tool
                   </span>
                 </div>
@@ -160,20 +159,20 @@ export default function CalculatorsPage() {
           </Link>
 
           {/* Suspension Setup Guide */}
-          <Link href="/calculators/suspension" className="group">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <Link href="/calculators/suspension" className="component-card group hover:border-primary">
+            <div className="p-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-orange-100 p-3 rounded-lg">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--warning)', opacity: 0.2 }}>
                   <div className="text-2xl">🔧</div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
+                  <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
                     Suspension Setup Guide
                   </h3>
-                  <p className="text-gray-600 mt-1 mb-3">
+                  <p className="text-sm mb-3" style={{ color: 'var(--muted)' }}>
                     MTB suspension baseline settings. Get PSI and click recommendations for your fork/shock.
                   </p>
-                  <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                  <span className="badge badge-free">
                     Free Tool
                   </span>
                 </div>
@@ -184,7 +183,7 @@ export default function CalculatorsPage() {
           {/* Chain Length Calculator */}
           <Link 
             href="/calculators/chain-length" 
-            className={`group ${profile?.subscription_status !== 'premium' ? 'cursor-not-allowed' : ''}`}
+            className={`component-card group ${profile?.subscription_status !== 'premium' ? 'cursor-not-allowed opacity-60' : 'hover:border-primary'}`}
             onClick={(e) => {
               if (profile?.subscription_status !== 'premium') {
                 e.preventDefault()
@@ -192,22 +191,20 @@ export default function CalculatorsPage() {
               }
             }}
           >
-            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow ${
-              profile?.subscription_status !== 'premium' ? 'opacity-75' : ''
-            }`}>
+            <div className="p-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-yellow-100 p-3 rounded-lg">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--warning)', opacity: 0.2 }}>
                   <div className="text-2xl">🔗</div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
+                  <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
                     Chain Length Calculator
                   </h3>
-                  <p className="text-gray-600 mt-1 mb-3">
+                  <p className="text-sm mb-3" style={{ color: 'var(--muted)' }}>
                     Calculate optimal chain length for your drivetrain setup.
                   </p>
                   {profile?.subscription_status !== 'premium' && (
-                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                    <span className="badge badge-premium">
                       Premium Feature
                     </span>
                   )}
@@ -219,7 +216,7 @@ export default function CalculatorsPage() {
           {/* Spoke Tension Calculator */}
           <Link 
             href="/calculators/spoke-tension" 
-            className={`group ${profile?.subscription_status !== 'premium' ? 'cursor-not-allowed' : ''}`}
+            className={`component-card group ${profile?.subscription_status !== 'premium' ? 'cursor-not-allowed opacity-60' : 'hover:border-primary'}`}
             onClick={(e) => {
               if (profile?.subscription_status !== 'premium') {
                 e.preventDefault()
@@ -227,22 +224,20 @@ export default function CalculatorsPage() {
               }
             }}
           >
-            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow ${
-              profile?.subscription_status !== 'premium' ? 'opacity-75' : ''
-            }`}>
+            <div className="p-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-red-100 p-3 rounded-lg">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--error)', opacity: 0.2 }}>
                   <div className="text-2xl">🎯</div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600">
+                  <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
                     Spoke Tension Calculator
                   </h3>
-                  <p className="text-gray-600 mt-1 mb-3">
+                  <p className="text-sm mb-3" style={{ color: 'var(--muted)' }}>
                     Calculate proper spoke tension for wheel building.
                   </p>
                   {profile?.subscription_status !== 'premium' && (
-                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                    <span className="badge badge-premium">
                       Premium Feature
                     </span>
                   )}
@@ -250,53 +245,37 @@ export default function CalculatorsPage() {
               </div>
             </div>
           </Link>
-
+          
         </div>
+      </div>
 
-        {/* Upgrade Modal */}
-        {showUpgradeModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-md mx-4">
-              <div className="text-center">
-                <div className="text-4xl mb-4">🚀</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Premium Feature
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  This calculator is available with Premium. Upgrade to access all advanced tools!
-                </p>
-                
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-2">Premium Features:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    <li>✅ Gear ratio calculator</li>
-                    <li>✅ Parts compatibility checker</li>
-                    <li>✅ Chain length calculator</li>
-                    <li>✅ Spoke tension calculator</li>
-                    <li>✅ Enhanced garage features</li>
-                  </ul>
-                </div>
-                
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setShowUpgradeModal(false)}
-                    className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
-                  >
-                    Maybe Later
-                  </button>
-                  <Link
-                    href="/upgrade"
-                    className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-center"
-                    onClick={() => setShowUpgradeModal(false)}
-                  >
-                    Upgrade Now
-                  </Link>
-                </div>
-              </div>
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="rounded-lg max-w-md w-full p-6" style={{ backgroundColor: 'var(--surface)' }}>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+              Upgrade to Premium
+            </h3>
+            <p className="mb-4" style={{ color: 'var(--muted)' }}>
+              Get access to advanced calculators, unlimited bikes, and component tracking.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => router.push('/upgrade')}
+                className="btn-primary flex-1"
+              >
+                Upgrade Now
+              </button>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="btn-secondary flex-1"
+              >
+                Later
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

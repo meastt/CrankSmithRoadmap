@@ -6,17 +6,30 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/Header'
 
+interface User {
+  id: string
+  email?: string
+}
+
 interface Profile {
   id: string
   subscription_status: 'free' | 'premium'
 }
 
+interface Bike {
+  id: string
+  nickname: string
+  brand: string
+  model: string
+  bike_type: string
+  created_at: string
+}
+
 export default function Garage() {
-  const [bikes, setBikes] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [bikes, setBikes] = useState<Bike[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [user, setUser] = useState<any>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const router = useRouter()
 
@@ -30,59 +43,31 @@ export default function Garage() {
       }
       setUser(user)
 
-      // Fetch user profile with subscription status
-      const { data: profileData, error: profileError } = await supabase
+      // Fetch user profile
+      const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, subscription_status')
+        .select('*')
         .eq('id', user.id)
         .single()
-
-      if (profileError) {
-        console.error('Error fetching profile:', profileError)
-        // If profile doesn't exist, create one with default free status
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              subscription_status: 'free'
-            }
-          ])
-          .select()
-          .single()
-
-        if (createError) {
-          console.error('Error creating profile:', createError)
-        } else {
-          setProfile(newProfile)
-        }
-      } else {
-        setProfile(profileData)
-      }
+      
+      setProfile(profileData)
 
       // Fetch bikes
-      const { data: bikesData, error: bikesError } = await supabase
+      const { data: bikesData } = await supabase
         .from('bikes')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (bikesError) {
-        setError('Error fetching bikes')
-        console.error('Error:', bikesError)
-      } else {
-        setBikes(bikesData || [])
-      }
-      
+      setBikes(bikesData || [])
       setLoading(false)
     }
 
     fetchGarageData()
   }, [router])
 
-
   const handleAddBikeClick = () => {
-    // Check freemium limit
+    // Free users can only have 1 bike
     if (profile?.subscription_status === 'free' && bikes.length >= 1) {
       setShowUpgradeModal(true)
     } else {
@@ -92,84 +77,90 @@ export default function Garage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-4">🔧</div>
-          <p className="text-gray-600">Loading your garage...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-4">❌</div>
-          <p className="text-gray-600">{error}</p>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+        <Header pageTitle="Loading..." />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="loading-spinner"></div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Header user={user} profile={profile || undefined} />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+      <Header 
+        pageTitle="Your Digital Garage" 
+        pageSubtitle="Manage your bikes and components"
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="text-3xl mr-4">🚴‍♂️</div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{bikes.length}</p>
-                <p className="text-gray-600">Bikes</p>
-                {profile?.subscription_status === 'free' && (
-                  <p className="text-xs text-gray-500">Free: 1 bike limit</p>
-                )}
+          <div className="card">
+            <div className="card-content">
+              <div className="flex items-center">
+                <div className="text-3xl mr-4">🚴‍♂️</div>
+                <div>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+                    {bikes.length}
+                  </p>
+                  <p style={{ color: 'var(--muted)' }}>Bikes</p>
+                  {profile?.subscription_status === 'free' && (
+                    <p className="text-xs" style={{ color: 'var(--muted-light)' }}>
+                      Free: 1 bike limit
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="text-3xl mr-4">🔧</div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">0</p>
-                <p className="text-gray-600">Components</p>
+          <div className="card">
+            <div className="card-content">
+              <div className="flex items-center">
+                <div className="text-3xl mr-4">🔧</div>
+                <div>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>0</p>
+                  <p style={{ color: 'var(--muted)' }}>Components</p>
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="text-3xl mr-4">📏</div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">0 miles</p>
-                <p className="text-gray-600">Total Miles</p>
+          <div className="card">
+            <div className="card-content">
+              <div className="flex items-center">
+                <div className="text-3xl mr-4">📏</div>
+                <div>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>0 miles</p>
+                  <p style={{ color: 'var(--muted)' }}>Total Miles</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tools Section - FIXED ROUTING */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">🔧 Tools & Calculators</h3>
+        {/* Tools Section */}
+        <div className="card mb-8">
+          <div className="card-header">
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+              🔧 Tools & Calculators
+            </h3>
           </div>
-          <div className="p-6">
+          <div className="card-content">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               
               {/* Gear Ratio Calculator - Premium */}
               <Link
                 href="/calculators/gear-ratio"
-                className={`p-4 rounded-lg border-2 transition-colors ${
+                className={`component-card p-4 transition-colors ${
                   profile?.subscription_status === 'premium'
-                    ? 'border-purple-200 bg-purple-50 hover:border-purple-300'
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                    ? 'hover:border-primary cursor-pointer'
+                    : 'cursor-not-allowed opacity-60'
                 }`}
                 onClick={(e) => {
                   if (profile?.subscription_status !== 'premium') {
@@ -180,10 +171,14 @@ export default function Garage() {
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">⚙️</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Gear Ratio Calculator</h4>
-                  <p className="text-sm text-gray-600">Compare current vs proposed setups</p>
+                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
+                    Gear Ratio Calculator
+                  </h4>
+                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                    Compare current vs proposed setups
+                  </p>
                   {profile?.subscription_status !== 'premium' && (
-                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                    <span className="badge badge-premium inline-block mt-2">
                       Premium
                     </span>
                   )}
@@ -193,10 +188,10 @@ export default function Garage() {
               {/* Parts Compatibility Checker - Premium */}
               <Link
                 href="/calculators/compatibility"
-                className={`p-4 rounded-lg border-2 transition-colors ${
+                className={`component-card p-4 transition-colors ${
                   profile?.subscription_status === 'premium'
-                    ? 'border-green-200 bg-green-50 hover:border-green-300'
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                    ? 'hover:border-primary cursor-pointer'
+                    : 'cursor-not-allowed opacity-60'
                 }`}
                 onClick={(e) => {
                   if (profile?.subscription_status !== 'premium') {
@@ -207,10 +202,14 @@ export default function Garage() {
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🔍</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Parts Compatibility</h4>
-                  <p className="text-sm text-gray-600">Check if parts work together</p>
+                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
+                    Parts Compatibility
+                  </h4>
+                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                    Check if parts work together
+                  </p>
                   {profile?.subscription_status !== 'premium' && (
-                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                    <span className="badge badge-premium inline-block mt-2">
                       Premium
                     </span>
                   )}
@@ -220,34 +219,42 @@ export default function Garage() {
               {/* Tire Pressure Calculator - Free */}
               <Link
                 href="/calculators/tire-pressure"
-                className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50 hover:border-blue-300 transition-colors"
+                className="component-card p-4 hover:border-primary transition-colors"
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🛞</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Tire Pressure</h4>
-                  <p className="text-sm text-gray-600">Calculate optimal pressure</p>
+                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
+                    Tire Pressure
+                  </h4>
+                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                    Calculate optimal pressure
+                  </p>
                 </div>
               </Link>
 
               {/* Suspension Setup Tool - Free */}
               <Link
                 href="/calculators/suspension"
-                className="p-4 rounded-lg border-2 border-orange-200 bg-orange-50 hover:border-orange-300 transition-colors"
+                className="component-card p-4 hover:border-primary transition-colors"
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🔧</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Suspension Setup</h4>
-                  <p className="text-sm text-gray-600">Calculate suspension settings</p>
+                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
+                    Suspension Setup
+                  </h4>
+                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                    Calculate suspension settings
+                  </p>
                 </div>
               </Link>
 
               {/* Chain Length Calculator - Premium */}
               <Link
                 href="/calculators/chain-length"
-                className={`p-4 rounded-lg border-2 transition-colors ${
+                className={`component-card p-4 transition-colors ${
                   profile?.subscription_status === 'premium'
-                    ? 'border-yellow-200 bg-yellow-50 hover:border-yellow-300'
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                    ? 'hover:border-primary cursor-pointer'
+                    : 'cursor-not-allowed opacity-60'
                 }`}
                 onClick={(e) => {
                   if (profile?.subscription_status !== 'premium') {
@@ -258,10 +265,14 @@ export default function Garage() {
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🔗</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Chain Length</h4>
-                  <p className="text-sm text-gray-600">Calculate optimal chain length</p>
+                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
+                    Chain Length
+                  </h4>
+                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                    Calculate optimal chain length
+                  </p>
                   {profile?.subscription_status !== 'premium' && (
-                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                    <span className="badge badge-premium inline-block mt-2">
                       Premium
                     </span>
                   )}
@@ -271,10 +282,10 @@ export default function Garage() {
               {/* Spoke Tension Calculator - Premium */}
               <Link
                 href="/calculators/spoke-tension"
-                className={`p-4 rounded-lg border-2 transition-colors ${
+                className={`component-card p-4 transition-colors ${
                   profile?.subscription_status === 'premium'
-                    ? 'border-red-200 bg-red-50 hover:border-red-300'
-                    : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                    ? 'hover:border-primary cursor-pointer'
+                    : 'cursor-not-allowed opacity-60'
                 }`}
                 onClick={(e) => {
                   if (profile?.subscription_status !== 'premium') {
@@ -285,10 +296,14 @@ export default function Garage() {
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">🎯</div>
-                  <h4 className="font-semibold text-gray-900 mb-1">Spoke Tension</h4>
-                  <p className="text-sm text-gray-600">Calculate proper spoke tension</p>
+                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
+                    Spoke Tension
+                  </h4>
+                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
+                    Calculate proper spoke tension
+                  </p>
                   {profile?.subscription_status !== 'premium' && (
-                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                    <span className="badge badge-premium inline-block mt-2">
                       Premium
                     </span>
                   )}
@@ -300,30 +315,33 @@ export default function Garage() {
         </div>
 
         {/* Bikes Section */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900">Your Bikes</h3>
-            <button
-              onClick={handleAddBikeClick}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              + Add New Bike
-            </button>
+        <div className="card">
+          <div className="card-header">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+                Your Bikes
+              </h3>
+              <button
+                onClick={handleAddBikeClick}
+                className="btn-primary"
+              >
+                Add Bike
+              </button>
+            </div>
           </div>
-          
-          <div className="p-6">
+          <div className="card-content">
             {bikes.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🚴‍♂️</div>
-                <h4 className="text-lg font-medium text-gray-900 mb-2">
-                  No bikes in your garage yet
+                <h4 className="text-lg font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+                  No bikes added yet
                 </h4>
-                <p className="text-gray-600 mb-6">
-                  Add your first bike to start tracking components and maintenance.
+                <p className="mb-6" style={{ color: 'var(--muted)' }}>
+                  Start by adding your first bike to your digital garage.
                 </p>
                 <button
                   onClick={handleAddBikeClick}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors"
+                  className="btn-primary"
                 >
                   Add Your First Bike
                 </button>
@@ -331,96 +349,54 @@ export default function Garage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {bikes.map((bike) => (
-                  <div key={bike.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="text-center mb-3">
-                      <div className="text-3xl mb-2">🚴‍♂️</div>
-                      <h4 className="font-semibold text-gray-900">{bike.nickname}</h4>
+                  <Link
+                    key={bike.id}
+                    href={`/garage/bike/${bike.id}`}
+                    className="component-card p-6 hover:border-primary transition-colors"
+                  >
+                    <div className="text-center">
+                      <div className="text-5xl mb-3">🚴‍♂️</div>
+                      <h4 className="font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+                        {bike.nickname}
+                      </h4>
+                      <p className="text-sm mb-1" style={{ color: 'var(--muted)' }}>
+                        {bike.brand} {bike.model}
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--muted-light)' }}>
+                        {bike.bike_type}
+                      </p>
                     </div>
-                    
-                    <div className="space-y-1 text-sm text-gray-600">
-                      {bike.brand && (
-                        <p><span className="font-medium">Brand:</span> {bike.brand}</p>
-                      )}
-                      {bike.model && (
-                        <p><span className="font-medium">Model:</span> {bike.model}</p>
-                      )}
-                      {bike.bike_type && (
-                        <p><span className="font-medium">Type:</span> {bike.bike_type}</p>
-                      )}
-                    </div>
-                    
-                    <div className="mt-4 pt-3 border-t border-gray-100">
-                      <Link 
-                        href={`/garage/bike/${bike.id}`}
-                        className="text-sm text-indigo-600 hover:text-indigo-700"
-                      >
-                        View Details →
-                      </Link>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="mt-8 bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-          </div>
-          <div className="p-6">
-            <div className="text-center py-8">
-              <div className="text-4xl mb-2">📊</div>
-              <p className="text-gray-600">
-                Your maintenance and ride history will appear here
-              </p>
-            </div>
           </div>
         </div>
       </main>
 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md mx-4">
-            <div className="text-center">
-              <div className="text-4xl mb-4">🚀</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Upgrade to Premium
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Free users can manage 1 bike. Upgrade to Premium to add unlimited bikes and unlock advanced features!
-              </p>
-              
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h4 className="font-semibold text-gray-900 mb-2">Premium Features:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>✅ Unlimited bikes</li>
-                  <li>✅ Advanced weight tracking</li>
-                  <li>✅ Manual mileage logging</li>
-                  <li>✅ Service alerts</li>
-                  <li>✅ Priority support</li>
-                </ul>
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setShowUpgradeModal(false)}
-                  className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
-                >
-                  Maybe Later
-                </button>
-                <button
-                  onClick={() => {
-                    // TODO: Implement Stripe checkout
-                    alert('Stripe checkout coming soon!')
-                  }}
-                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-                >
-                  Upgrade Now
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="rounded-lg max-w-md w-full p-6" style={{ backgroundColor: 'var(--surface)' }}>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+              Upgrade to Premium
+            </h3>
+            <p className="mb-4" style={{ color: 'var(--muted)' }}>
+              Get access to unlimited bikes, advanced calculators, and component tracking.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => router.push('/upgrade')}
+                className="btn-primary flex-1"
+              >
+                Upgrade Now
+              </button>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="btn-secondary flex-1"
+              >
+                Later
+              </button>
             </div>
           </div>
         </div>

@@ -1,78 +1,89 @@
 // src/components/Header.tsx - Navigation Fixes
 'use client'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
+import type { User } from '@supabase/supabase-js'
+
+interface Profile {
+  id: string
+  subscription_status: string
+}
 
 interface HeaderProps {
-  user?: {
-    id: string
-    email?: string
-  }
-  profile?: {
-    id: string
-    subscription_status?: 'free' | 'premium'
-  }
-  title?: string
-  subtitle?: string
+  pageTitle: string
+  pageSubtitle?: string
   backTo?: {
     href: string
     label: string
   }
 }
 
-export default function Header({ user, profile, title, subtitle, backTo }: HeaderProps) {
-  const pathname = usePathname()
+export default function Header({ pageTitle, pageSubtitle, backTo }: HeaderProps) {
+  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+
+      if (user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        
+        setProfile(profileData)
+      }
+    }
+
+    fetchUser()
+  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    router.push('/')
+    router.push('/login')
   }
-
-  const getPageInfo = () => {
-    if (title && subtitle) return { title, subtitle }
-    
-    if (pathname === '/garage') return { title: 'Your Digital Garage', subtitle: 'Manage your bikes and components' }
-    if (pathname === '/calculators') return { title: 'Tools & Calculators', subtitle: 'Pre-ride optimization tools' }
-    if (pathname.includes('/calculators/tire-pressure')) return { title: 'Tire Pressure Calculator', subtitle: 'Get optimal pressure recommendations' }
-    if (pathname.includes('/calculators/suspension')) return { title: 'Suspension Setup Guide', subtitle: 'MTB suspension baseline settings' }
-    if (pathname.includes('/calculators/gear-ratio')) return { title: 'Gear Ratio Calculator', subtitle: 'Compare current vs proposed setups' }
-    if (pathname.includes('/calculators/compatibility')) return { title: 'Parts Compatibility Checker', subtitle: 'Verify parts work together' }
-    if (pathname.includes('/calculators/chain-length')) return { title: 'Chain Length Calculator', subtitle: 'Calculate optimal chain length' }
-    if (pathname.includes('/calculators/spoke-tension')) return { title: 'Spoke Tension Calculator', subtitle: 'Calculate proper spoke tension' }
-    if (pathname.includes('/add-component')) return { title: 'Add Component', subtitle: 'Find and add parts to your bike' }
-    if (pathname.includes('/bike/')) return { title: 'Bike Details', subtitle: 'View and manage components' }
-    
-    return { title: 'CrankSmith', subtitle: 'Your digital bike workshop' }
-  }
-
-  const { title: pageTitle, subtitle: pageSubtitle } = getPageInfo()
 
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4">
+    <header className="border-b sticky top-0 z-50" 
+            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Top row - Logo and user info */}
-        <div className="flex justify-between items-center py-4">
-          <Link href="/garage" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-            <span className="text-2xl">🔧</span>
-            <span className="text-xl font-bold text-gray-900">CrankSmith</span>
+        <div className="flex items-center justify-between mb-6">
+          <Link 
+            href="/garage"
+            className="flex items-center space-x-3 group"
+          >
+            <div className="text-4xl">🚴</div>
+            <span className="text-2xl font-bold transition-colors logo-text" 
+                  style={{ color: 'var(--foreground)' }}>
+              CrankSmith
+            </span>
           </Link>
           
           {user && (
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">{user.email}</span>
+                <span className="text-sm text-muted" style={{ color: 'var(--muted)' }}>
+                  {user.email}
+                </span>
                 {profile?.subscription_status === 'premium' && (
-                  <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                  <span className="badge badge-premium">
                     Premium
                   </span>
                 )}
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium transition-colors sign-out-btn"
+                style={{ color: 'var(--muted)' }}
               >
                 Sign Out
               </button>
@@ -80,31 +91,30 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
           )}
         </div>
 
-        {/* Navigation Bar - FIXED HIGHLIGHTING LOGIC */}
+        {/* Navigation Bar - Carbon Fiber theme */}
         {user && (
           <div className="flex items-center space-x-8 pb-4">
             <Link 
               href="/garage"
-              className={`text-sm font-medium transition-colors ${
-                pathname === '/garage'  // ONLY highlight on actual garage page
-                  ? 'text-indigo-600 border-b-2 border-indigo-600 pb-2' 
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`nav-link text-sm font-semibold pb-2 ${
+                pathname === '/garage' ? 'active' : ''
               }`}
             >
               Garage
             </Link>
             <Link 
               href="/calculators"
-              className={`text-sm font-medium transition-colors ${
-                pathname.includes('/calculators')
-                  ? 'text-indigo-600 border-b-2 border-indigo-600 pb-2' 
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`nav-link text-sm font-semibold pb-2 ${
+                pathname.includes('/calculators') ? 'active' : ''
               }`}
             >
               Tools & Calculators
             </Link>
             {/* Future navigation items */}
-            <span className="text-sm text-gray-400">Community (Coming Soon)</span>
+            <span className="text-sm font-medium text-muted-light" 
+                  style={{ color: 'var(--muted-light)' }}>
+              Community (Coming Soon)
+            </span>
           </div>
         )}
 
@@ -114,15 +124,20 @@ export default function Header({ user, profile, title, subtitle, backTo }: Heade
             {backTo && (
               <Link 
                 href={backTo.href}
-                className="text-sm text-indigo-600 hover:text-indigo-700 transition-colors flex items-center"
+                className="text-sm font-medium transition-colors hover:opacity-80 flex items-center"
+                style={{ color: 'var(--primary)' }}
               >
                 ← {backTo.label}
               </Link>
             )}
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+                {pageTitle}
+              </h1>
               {pageSubtitle && (
-                <p className="text-sm text-gray-600 mt-1">{pageSubtitle}</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
+                  {pageSubtitle}
+                </p>
               )}
             </div>
           </div>
