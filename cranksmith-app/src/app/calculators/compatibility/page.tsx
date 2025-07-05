@@ -84,17 +84,15 @@ export default function CompatibilityChecker() {
   }, [router])
 
   const fetchComponents = async () => {
-    // Fetch components with their categories
+    // Fetch components from the products table (which is the correct table)
     const { data: componentsData, error } = await supabase
-      .from('components')
+      .from('products')
       .select(`
         id,
         brand,
         model,
         description,
-        component_categories (
-          name
-        )
+        product_type
       `)
       .order('brand', { ascending: true })
 
@@ -103,13 +101,13 @@ export default function CompatibilityChecker() {
       return
     }
 
-    // Transform the data to match our interface (take first category)
+    // Transform the data to match our interface (use product_type as category)
     const transformedComponents: Component[] = (componentsData || []).map((comp: any) => ({
       id: comp.id,
       brand: comp.brand,
       model: comp.model,
       description: comp.description,
-      component_categories: comp.component_categories?.[0] || null
+      component_categories: comp.product_type ? { name: comp.product_type } : null
     }))
 
     setComponents(transformedComponents)
@@ -124,9 +122,9 @@ export default function CompatibilityChecker() {
     setResult(null)
 
     try {
-      // Get standards for both components
+      // Get standards for both components (using product_standards table)
       const { data: standards1, error: error1 } = await supabase
-        .from('component_standards')
+        .from('product_standards')
         .select(`
           standards (
             id,
@@ -136,10 +134,10 @@ export default function CompatibilityChecker() {
             description
           )
         `)
-        .eq('component_id', selectedComponent1)
+        .eq('product_id', selectedComponent1)
 
       const { data: standards2, error: error2 } = await supabase
-        .from('component_standards')
+        .from('product_standards')
         .select(`
           standards (
             id,
@@ -149,14 +147,14 @@ export default function CompatibilityChecker() {
             description
           )
         `)
-        .eq('component_id', selectedComponent2)
+        .eq('product_id', selectedComponent2)
 
       if (error1 || error2) {
         console.error('Error fetching component standards:', error1 || error2)
         setResult({
           compatible: false,
           compatibility_type: 'incompatible',
-          notes: 'Error checking compatibility - components may not have standards defined yet.'
+          notes: 'Error checking compatibility - products may not have standards defined yet.'
         })
         setChecking(false)
         return
@@ -195,13 +193,13 @@ export default function CompatibilityChecker() {
               let adapterComponent: Component | undefined = undefined
               if (rule.adapter_component_id) {
                 const { data: adapterData, error: adapterError } = await supabase
-                  .from('components')
+                  .from('products')
                   .select(`
                     id,
                     brand,
                     model,
                     description,
-                    component_categories (name)
+                    product_type
                   `)
                   .eq('id', rule.adapter_component_id)
                   .single()
@@ -212,7 +210,7 @@ export default function CompatibilityChecker() {
                     brand: adapterData.brand,
                     model: adapterData.model,
                     description: adapterData.description,
-                    component_categories: (adapterData as any).component_categories?.[0] || null
+                    component_categories: adapterData.product_type ? { name: adapterData.product_type } : null
                   }
                 }
               }
@@ -247,7 +245,7 @@ export default function CompatibilityChecker() {
           setResult({
             compatible: false,
             compatibility_type: 'incompatible',
-            notes: 'No compatibility information available for these components. They may require further research or custom solutions.'
+            notes: 'No compatibility information available for these products. They may require further research or custom solutions.'
           })
         }
       }
