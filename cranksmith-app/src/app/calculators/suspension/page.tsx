@@ -76,6 +76,13 @@ export default function SuspensionCalculator() {
   const [forkResult, setForkResult] = useState<SuspensionResult | null>(null)
   const [shockResult, setShockResult] = useState<SuspensionResult | null>(null)
   
+  // Shock brands and models for manual selection
+  const shockBrands = ['Fox', 'RockShox']
+  const shockModels: Record<string, string[]> = {
+    'Fox': ['Float X2', 'Float DPS'],
+    'RockShox': ['Super Deluxe', 'Deluxe']
+  }
+  
   const router = useRouter()
 
   useEffect(() => {
