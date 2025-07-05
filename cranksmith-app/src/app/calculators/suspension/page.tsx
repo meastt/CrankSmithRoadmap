@@ -462,6 +462,40 @@ export default function SuspensionCalculator() {
                     </select>
                   </div>
                 </div>
+
+                {/* Manual Shock Selection */}
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Shock Brand</label>
+                    <select
+                      value={manualShockBrand}
+                      onChange={(e) => {
+                        setManualShockBrand(e.target.value)
+                        setManualShockModel('') // Reset model when brand changes
+                      }}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select shock brand...</option>
+                      {shockBrands.map(brand => (
+                        <option key={brand} value={brand}>{brand}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Shock Model</label>
+                    <select
+                      value={manualShockModel}
+                      onChange={(e) => setManualShockModel(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      disabled={!manualShockBrand}
+                    >
+                      <option value="">Select shock model...</option>
+                      {manualShockBrand && shockModels[manualShockBrand]?.map(model => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
             )}
 
