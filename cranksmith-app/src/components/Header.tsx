@@ -1,4 +1,4 @@
-// src/components/Header.tsx - Navigation Fixes
+// File: cranksmith-app/src/components/Header.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -52,8 +52,7 @@ export default function Header({ pageTitle, pageSubtitle, backTo }: HeaderProps)
   }
 
   return (
-    <header className="border-b sticky top-0 z-50" 
-            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+    <header className="header-dark sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Top row - Logo and user info */}
         <div className="flex items-center justify-between mb-6">
@@ -61,9 +60,8 @@ export default function Header({ pageTitle, pageSubtitle, backTo }: HeaderProps)
             href="/garage"
             className="flex items-center space-x-3 group"
           >
-            <div className="text-4xl">🚴</div>
-            <span className="text-2xl font-bold transition-colors logo-text" 
-                  style={{ color: 'var(--foreground)' }}>
+            <div className="text-4xl filter drop-shadow-lg">🚴</div>
+            <span className="text-2xl font-bold logo-text transition-all duration-200 drop-shadow-lg" style={{ color: 'var(--foreground)' }}>
               CrankSmith
             </span>
           </Link>
@@ -71,19 +69,16 @@ export default function Header({ pageTitle, pageSubtitle, backTo }: HeaderProps)
           {user && (
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted" style={{ color: 'var(--muted)' }}>
-                  {user.email}
-                </span>
+                <span className="text-sm" style={{ color: 'var(--muted)' }}>{user.email}</span>
                 {profile?.subscription_status === 'premium' && (
-                  <span className="badge badge-premium">
+                  <span className="px-3 py-1 bg-gradient-to-r from-orange-600 to-orange-700 text-white text-xs font-semibold rounded-full shadow-lg">
                     Premium
                   </span>
                 )}
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-sm font-medium transition-colors sign-out-btn"
-                style={{ color: 'var(--muted)' }}
+                className="text-sm text-slate-300 hover:text-orange-500 transition-colors font-medium"
               >
                 Sign Out
               </button>
@@ -91,30 +86,31 @@ export default function Header({ pageTitle, pageSubtitle, backTo }: HeaderProps)
           )}
         </div>
 
-        {/* Navigation Bar - Carbon Fiber theme */}
+        {/* Navigation Bar - Bold dark theme */}
         {user && (
           <div className="flex items-center space-x-8 pb-4">
             <Link 
               href="/garage"
-              className={`nav-link text-sm font-semibold pb-2 ${
-                pathname === '/garage' ? 'active' : ''
+              className={`text-sm font-semibold transition-all duration-200 pb-2 ${
+                pathname === '/garage'
+                  ? 'text-orange-500 border-b-2 border-orange-500 drop-shadow-lg' 
+                  : 'text-slate-300 hover:text-slate-100'
               }`}
             >
               Garage
             </Link>
             <Link 
               href="/calculators"
-              className={`nav-link text-sm font-semibold pb-2 ${
-                pathname.includes('/calculators') ? 'active' : ''
+              className={`text-sm font-semibold transition-all duration-200 pb-2 ${
+                pathname.includes('/calculators')
+                  ? 'text-orange-500 border-b-2 border-orange-500 drop-shadow-lg' 
+                  : 'text-slate-300 hover:text-slate-100'
               }`}
             >
               Tools & Calculators
             </Link>
             {/* Future navigation items */}
-            <span className="text-sm font-medium text-muted-light" 
-                  style={{ color: 'var(--muted-light)' }}>
-              Community (Coming Soon)
-            </span>
+            <span className="text-sm text-slate-500 font-medium">Community (Coming Soon)</span>
           </div>
         )}
 
@@ -124,20 +120,15 @@ export default function Header({ pageTitle, pageSubtitle, backTo }: HeaderProps)
             {backTo && (
               <Link 
                 href={backTo.href}
-                className="text-sm font-medium transition-colors hover:opacity-80 flex items-center"
-                style={{ color: 'var(--primary)' }}
+                className="text-sm text-orange-500 hover:text-orange-400 transition-colors flex items-center font-medium"
               >
                 ← {backTo.label}
               </Link>
             )}
             <div>
-              <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
-                {pageTitle}
-              </h1>
+              <h1 className="text-2xl font-bold text-slate-100">{pageTitle}</h1>
               {pageSubtitle && (
-                <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
-                  {pageSubtitle}
-                </p>
+                <p className="text-sm text-slate-300 mt-1">{pageSubtitle}</p>
               )}
             </div>
           </div>

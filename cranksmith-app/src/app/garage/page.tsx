@@ -1,4 +1,4 @@
-// src/app/garage/page.tsx
+// File: cranksmith-app/src/app/garage/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -81,7 +81,7 @@ export default function Garage() {
         <Header pageTitle="Loading..." />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-center items-center h-64">
-            <div className="loading-spinner"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function Garage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+            <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
       <Header 
         pageTitle="Your Digital Garage" 
         pageSubtitle="Manage your bikes and components"
@@ -103,7 +103,7 @@ export default function Garage() {
           <div className="card">
             <div className="card-content">
               <div className="flex items-center">
-                <div className="text-3xl mr-4">🚴‍♂️</div>
+                <div className="text-3xl mr-4 filter drop-shadow-lg">🚴‍♂️</div>
                 <div>
                   <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
                     {bikes.length}
@@ -122,7 +122,7 @@ export default function Garage() {
           <div className="card">
             <div className="card-content">
               <div className="flex items-center">
-                <div className="text-3xl mr-4">🔧</div>
+                <div className="text-3xl mr-4 filter drop-shadow-lg">🔧</div>
                 <div>
                   <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>0</p>
                   <p style={{ color: 'var(--muted)' }}>Components</p>
@@ -130,11 +130,11 @@ export default function Garage() {
               </div>
             </div>
           </div>
-          
+
           <div className="card">
             <div className="card-content">
               <div className="flex items-center">
-                <div className="text-3xl mr-4">📏</div>
+                <div className="text-3xl mr-4 filter drop-shadow-lg">📊</div>
                 <div>
                   <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>0 miles</p>
                   <p style={{ color: 'var(--muted)' }}>Total Miles</p>
@@ -144,256 +144,187 @@ export default function Garage() {
           </div>
         </div>
 
-        {/* Tools Section */}
-        <div className="card mb-8">
-          <div className="card-header">
-            <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
-              🔧 Tools & Calculators
-            </h3>
+        {/* Tools & Calculators Section */}
+        <div className="bg-slate-700 rounded-lg border border-slate-600 shadow-lg p-6 mb-8">
+          <div className="flex items-center mb-6">
+            <div className="text-2xl mr-3 filter drop-shadow-lg">🛠</div>
+            <h2 className="text-xl font-semibold text-slate-100">Tools & Calculators</h2>
           </div>
-          <div className="card-content">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              
-              {/* Gear Ratio Calculator - Premium */}
-              <Link
-                href="/calculators/gear-ratio"
-                className={`component-card p-4 transition-colors ${
-                  profile?.subscription_status === 'premium'
-                    ? 'hover:border-primary cursor-pointer'
-                    : 'cursor-not-allowed opacity-60'
-                }`}
-                onClick={(e) => {
-                  if (profile?.subscription_status !== 'premium') {
-                    e.preventDefault()
-                    setShowUpgradeModal(true)
-                  }
-                }}
-              >
-                <div className="text-center">
-                  <div className="text-3xl mb-2">⚙️</div>
-                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
-                    Gear Ratio Calculator
-                  </h4>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Compare current vs proposed setups
-                  </p>
-                  {profile?.subscription_status !== 'premium' && (
-                    <span className="badge badge-premium inline-block mt-2">
-                      Premium
-                    </span>
-                  )}
-                </div>
-              </Link>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Link 
+              href="/calculators/gear-ratio"
+              className="group p-4 bg-slate-600 border border-slate-500 rounded-lg hover:border-orange-500 hover:shadow-lg hover:bg-slate-500 transition-all duration-200"
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-3 filter drop-shadow-lg">⚙️</div>
+                <h3 className="font-semibold text-slate-100 group-hover:text-orange-400 transition-colors">
+                  Gear Ratio Calculator
+                </h3>
+                <p className="text-sm text-slate-300 mt-1">
+                  Compare current vs proposed setups
+                </p>
+              </div>
+            </Link>
 
-              {/* Parts Compatibility Checker - Premium */}
-              <Link
-                href="/calculators/compatibility"
-                className={`component-card p-4 transition-colors ${
-                  profile?.subscription_status === 'premium'
-                    ? 'hover:border-primary cursor-pointer'
-                    : 'cursor-not-allowed opacity-60'
-                }`}
-                onClick={(e) => {
-                  if (profile?.subscription_status !== 'premium') {
-                    e.preventDefault()
-                    setShowUpgradeModal(true)
-                  }
-                }}
-              >
-                <div className="text-center">
-                  <div className="text-3xl mb-2">🔍</div>
-                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
-                    Parts Compatibility
-                  </h4>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Check if parts work together
-                  </p>
-                  {profile?.subscription_status !== 'premium' && (
-                    <span className="badge badge-premium inline-block mt-2">
-                      Premium
-                    </span>
-                  )}
-                </div>
-              </Link>
+            <Link 
+              href="/calculators/compatibility"
+              className="group p-4 bg-gradient-to-br from-orange-600 to-orange-700 border border-orange-500 rounded-lg hover:from-orange-500 hover:to-orange-600 hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-3 filter drop-shadow-lg">🔍</div>
+                <h3 className="font-semibold text-white transition-colors">
+                  Parts Compatibility
+                </h3>
+                <p className="text-sm text-orange-100 mt-1">
+                  Check if parts work together
+                </p>
+              </div>
+            </Link>
 
-              {/* Tire Pressure Calculator - Free */}
-              <Link
-                href="/calculators/tire-pressure"
-                className="component-card p-4 hover:border-primary transition-colors"
-              >
-                <div className="text-center">
-                  <div className="text-3xl mb-2">🛞</div>
-                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
-                    Tire Pressure
-                  </h4>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Calculate optimal pressure
-                  </p>
-                </div>
-              </Link>
+            <Link 
+              href="/calculators/tire-pressure"
+              className="group p-4 bg-slate-600 border border-slate-500 rounded-lg hover:border-orange-500 hover:shadow-lg hover:bg-slate-500 transition-all duration-200"
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-3 filter drop-shadow-lg">🔴</div>
+                <h3 className="font-semibold text-slate-100 group-hover:text-orange-400 transition-colors">
+                  Tire Pressure
+                </h3>
+                <p className="text-sm text-slate-300 mt-1">
+                  Calculate optimal pressure
+                </p>
+              </div>
+            </Link>
 
-              {/* Suspension Setup Tool - Free */}
-              <Link
-                href="/calculators/suspension"
-                className="component-card p-4 hover:border-primary transition-colors"
-              >
-                <div className="text-center">
-                  <div className="text-3xl mb-2">🔧</div>
-                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
-                    Suspension Setup
-                  </h4>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Calculate suspension settings
-                  </p>
-                </div>
-              </Link>
+            <Link 
+              href="/calculators/suspension"
+              className="group p-4 bg-slate-600 border border-slate-500 rounded-lg hover:border-orange-500 hover:shadow-lg hover:bg-slate-500 transition-all duration-200"
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-3 filter drop-shadow-lg">🔧</div>
+                <h3 className="font-semibold text-slate-100 group-hover:text-orange-400 transition-colors">
+                  Suspension Setup
+                </h3>
+                <p className="text-sm text-slate-300 mt-1">
+                  Calculate suspension settings
+                </p>
+              </div>
+            </Link>
 
-              {/* Chain Length Calculator - Premium */}
-              <Link
-                href="/calculators/chain-length"
-                className={`component-card p-4 transition-colors ${
-                  profile?.subscription_status === 'premium'
-                    ? 'hover:border-primary cursor-pointer'
-                    : 'cursor-not-allowed opacity-60'
-                }`}
-                onClick={(e) => {
-                  if (profile?.subscription_status !== 'premium') {
-                    e.preventDefault()
-                    setShowUpgradeModal(true)
-                  }
-                }}
-              >
-                <div className="text-center">
-                  <div className="text-3xl mb-2">🔗</div>
-                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
-                    Chain Length
-                  </h4>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Calculate optimal chain length
-                  </p>
-                  {profile?.subscription_status !== 'premium' && (
-                    <span className="badge badge-premium inline-block mt-2">
-                      Premium
-                    </span>
-                  )}
-                </div>
-              </Link>
+            <Link 
+              href="/calculators/chain-length"
+              className="group p-4 bg-slate-600 border border-slate-500 rounded-lg hover:border-orange-500 hover:shadow-lg hover:bg-slate-500 transition-all duration-200"
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-3 filter drop-shadow-lg">🔗</div>
+                <h3 className="font-semibold text-slate-100 group-hover:text-orange-400 transition-colors">
+                  Chain Length
+                </h3>
+                <p className="text-sm text-slate-300 mt-1">
+                  Calculate optimal chain length
+                </p>
+              </div>
+            </Link>
 
-              {/* Spoke Tension Calculator - Premium */}
-              <Link
-                href="/calculators/spoke-tension"
-                className={`component-card p-4 transition-colors ${
-                  profile?.subscription_status === 'premium'
-                    ? 'hover:border-primary cursor-pointer'
-                    : 'cursor-not-allowed opacity-60'
-                }`}
-                onClick={(e) => {
-                  if (profile?.subscription_status !== 'premium') {
-                    e.preventDefault()
-                    setShowUpgradeModal(true)
-                  }
-                }}
-              >
-                <div className="text-center">
-                  <div className="text-3xl mb-2">🎯</div>
-                  <h4 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
-                    Spoke Tension
-                  </h4>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Calculate proper spoke tension
-                  </p>
-                  {profile?.subscription_status !== 'premium' && (
-                    <span className="badge badge-premium inline-block mt-2">
-                      Premium
-                    </span>
-                  )}
-                </div>
-              </Link>
-              
-            </div>
+            <Link 
+              href="/calculators/spoke-tension"
+              className="group p-4 bg-slate-600 border border-slate-500 rounded-lg hover:border-orange-500 hover:shadow-lg hover:bg-slate-500 transition-all duration-200"
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-3 filter drop-shadow-lg">🎯</div>
+                <h3 className="font-semibold text-slate-100 group-hover:text-orange-400 transition-colors">
+                  Spoke Tension
+                </h3>
+                <p className="text-sm text-slate-300 mt-1">
+                  Calculate proper spoke tension
+                </p>
+              </div>
+            </Link>
           </div>
         </div>
 
-        {/* Bikes Section */}
-        <div className="card">
-          <div className="card-header">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
-                Your Bikes
+        {/* Your Bikes Section */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-slate-100">Your Bikes</h2>
+          <button
+            onClick={handleAddBikeClick}
+            className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          >
+            Add Bike
+          </button>
+        </div>
+
+        {bikes.length === 0 ? (
+          <div className="bg-slate-700 rounded-lg border border-slate-600 shadow-lg">
+            <div className="p-12 text-center">
+              <div className="text-6xl mb-4 filter drop-shadow-lg">🚴‍♂️</div>
+              <h3 className="text-xl font-semibold text-slate-100 mb-2">
+                No bikes yet
               </h3>
+              <p className="text-slate-300 mb-6">
+                Add your first bike to start building your digital garage.
+              </p>
               <button
                 onClick={handleAddBikeClick}
-                className="btn-primary"
+                className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                Add Bike
+                Add Your First Bike
               </button>
             </div>
           </div>
-          <div className="card-content">
-            {bikes.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">🚴‍♂️</div>
-                <h4 className="text-lg font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-                  No bikes added yet
-                </h4>
-                <p className="mb-6" style={{ color: 'var(--muted)' }}>
-                  Start by adding your first bike to your digital garage.
-                </p>
-                <button
-                  onClick={handleAddBikeClick}
-                  className="btn-primary"
-                >
-                  Add Your First Bike
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bikes.map((bike) => (
-                  <Link
-                    key={bike.id}
-                    href={`/garage/bike/${bike.id}`}
-                    className="component-card p-6 hover:border-primary transition-colors"
-                  >
-                    <div className="text-center">
-                      <div className="text-5xl mb-3">🚴‍♂️</div>
-                      <h4 className="font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-                        {bike.nickname}
-                      </h4>
-                      <p className="text-sm mb-1" style={{ color: 'var(--muted)' }}>
-                        {bike.brand} {bike.model}
-                      </p>
-                      <p className="text-xs" style={{ color: 'var(--muted-light)' }}>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bikes.map((bike) => (
+              <Link 
+                key={bike.id} 
+                href={`/garage/bike/${bike.id}`}
+                className="group block"
+              >
+                <div className="bg-slate-700 rounded-lg border border-slate-600 shadow-lg hover:shadow-xl hover:border-orange-500 transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-4xl filter drop-shadow-lg">🚴‍♂️</div>
+                      <span className="px-2 py-1 bg-slate-600 text-slate-300 text-xs rounded-full border border-slate-500">
                         {bike.bike_type}
-                      </p>
+                      </span>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+                    
+                    <h3 className="text-lg font-semibold text-slate-100 group-hover:text-orange-400 transition-colors mb-1">
+                      {bike.nickname}
+                    </h3>
+                    <p className="text-slate-300 text-sm mb-2">
+                      {bike.brand} {bike.model}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Added {new Date(bike.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
-        </div>
+        )}
       </main>
 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="rounded-lg max-w-md w-full p-6" style={{ backgroundColor: 'var(--surface)' }}>
-            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-              Upgrade to Premium
-            </h3>
-            <p className="mb-4" style={{ color: 'var(--muted)' }}>
-              Get access to unlimited bikes, advanced calculators, and component tracking.
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-700 border border-slate-600 rounded-lg max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-100 mb-2">Upgrade to Premium</h3>
+            <p className="text-slate-300 mb-4">
+              Free accounts are limited to 1 bike. Upgrade to Premium for unlimited bikes and advanced features.
             </p>
             <div className="flex space-x-3">
               <button
                 onClick={() => router.push('/upgrade')}
-                className="btn-primary flex-1"
+                className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white px-4 py-2 rounded-lg font-semibold flex-1 transition-all duration-200 shadow-lg"
               >
                 Upgrade Now
               </button>
               <button
                 onClick={() => setShowUpgradeModal(false)}
-                className="btn-secondary flex-1"
+                className="bg-slate-600 hover:bg-slate-500 text-slate-100 px-4 py-2 rounded-lg font-semibold flex-1 transition-colors border border-slate-500"
               >
                 Later
               </button>
