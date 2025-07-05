@@ -8,7 +8,9 @@ import Link from 'next/link'
 import { 
   calculateSuspensionSetup, 
   getForkSpecs, 
+  getShockSpecs,
   FORK_DATABASE,
+  SHOCK_DATABASE,
   type SuspensionCalculationInputs,
   type SuspensionResult
 } from '@/lib/suspension-logic'
@@ -23,6 +25,13 @@ interface SuspensionComponent {
   baseline_compression_clicks?: number
   component_categories: {
     name: string
+  }
+  shocks?: {
+    travel_mm?: number
+    stanchion_diameter_mm?: number
+    max_pressure_psi?: number
+    recommended_sag_percent?: number
+    spring_curve?: 'linear' | 'progressive' | 'digressive'
   }
 }
 
@@ -58,6 +67,10 @@ export default function SuspensionCalculator() {
   const [manualForkModel, setManualForkModel] = useState('')
   const [manualTravel, setManualTravel] = useState(140)
   const [manualStanchionSize, setManualStanchionSize] = useState(34)
+  
+  // Manual shock selection for non-garage mode
+  const [manualShockBrand, setManualShockBrand] = useState('')
+  const [manualShockModel, setManualShockModel] = useState('')
   
   // Results
   const [forkResult, setForkResult] = useState<SuspensionResult | null>(null)
@@ -149,17 +162,12 @@ export default function SuspensionCalculator() {
     setShockResult(null)
 
     let forkComponent: SuspensionComponent | undefined
-    let shockComponent: SuspensionComponent | undefined
 
     if (useGarageMode && selectedBike) {
       // Use components from selected garage bike
       forkComponent = selectedBike.bike_components
         .map(bc => bc.components)
         .find(comp => comp.component_categories.name === 'Fork')
-
-      shockComponent = selectedBike.bike_components
-        .map(bc => bc.components)
-        .find(comp => comp.component_categories.name === 'Shock')
     } else {
       // Use manual inputs
       if (manualForkBrand && manualForkModel) {
@@ -203,8 +211,48 @@ export default function SuspensionCalculator() {
       setForkResult(result)
     }
 
-    // TODO: Add shock calculation logic here
-    // Similar to fork but with different constants
+    // Shock calculation logic
+    if (selectedBike && useGarageMode) {
+      const allProducts = selectedBike.bike_components.map(bc => bc.components);
+      const shockComponent = allProducts.find(comp => comp.component_categories.name === 'Shock');
+      if (shockComponent) {
+        const shockInputs: SuspensionCalculationInputs = {
+          riderWeightLbs: riderWeight,
+          gearWeightLbs: gearWeight,
+          shockSpecs: {
+            brand: shockComponent.brand || 'Unknown',
+            model: shockComponent.model || 'Unknown',
+            travel_mm: shockComponent.shocks?.travel_mm || 150,
+            stanchion_diameter_mm: shockComponent.shocks?.stanchion_diameter_mm || 40,
+            max_pressure_psi: shockComponent.shocks?.max_pressure_psi || 300,
+            recommended_sag_percent: shockComponent.shocks?.recommended_sag_percent || 30,
+            spring_curve: shockComponent.shocks?.spring_curve || 'progressive'
+          },
+          ridingStyle,
+          targetSagPercent: customSag
+        }
+
+        const shockResult = calculateSuspensionSetup(shockInputs);
+        setShockResult(shockResult);
+      }
+    } else if (!useGarageMode && manualShockBrand && manualShockModel) {
+      // Manual shock calculation
+      const shockKey = `${manualShockBrand} ${manualShockModel}`;
+      const shockSpecs = SHOCK_DATABASE[shockKey];
+      
+      if (shockSpecs) {
+        const shockInputs: SuspensionCalculationInputs = {
+          riderWeightLbs: riderWeight,
+          gearWeightLbs: gearWeight,
+          shockSpecs,
+          ridingStyle,
+          targetSagPercent: customSag
+        }
+
+        const shockResult = calculateSuspensionSetup(shockInputs);
+        setShockResult(shockResult);
+      }
+    }
 
     setCalculating(false)
   }
@@ -514,7 +562,38 @@ export default function SuspensionCalculator() {
               </div>
             )}
 
-            {!forkResult && !calculating && (
+            {shockResult && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-lg font-semibold">Shock Setup</h3>
+                  {getAccuracyBadge(shockResult.accuracy)}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="text-center p-4 bg-orange-50 rounded">
+                    <div className="text-2xl font-bold text-orange-600">{shockResult.airPressure}</div>
+                    <div className="text-sm text-gray-600">PSI</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded">
+                    <div className="text-2xl font-bold text-purple-600">{shockResult.targetSag}%</div>
+                    <div className="text-sm text-gray-600">Target Sag</div>
+                  </div>
+                </div>
+                
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-gray-700">Rebound Clicks: {shockResult.reboundClicks}</p>
+                  <p className="text-xs text-gray-500">From fully closed (slow)</p>
+                </div>
+
+                <div className="space-y-2">
+                  {shockResult.notes.map((note, index) => (
+                    <p key={index} className="text-sm text-gray-600">• {note}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!forkResult && !shockResult && !calculating && (
               <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
                 <div className="text-4xl mb-2">🏔️</div>
                 <p>Enter your details and click Calculate Setup to get recommendations</p>
